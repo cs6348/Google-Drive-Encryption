@@ -1,7 +1,7 @@
 'use strict'
 
-import { join } from 'path';
-import { app, BrowserWindow } from 'electron';
+const path = require('path')
+const {app, BrowserWindow} = require('electron')
 
 let win = null;
 
@@ -15,7 +15,7 @@ const getUserSettings = {
 //TUDO: change to render process
 function launchApp(){
     win = new BrowserWindow(getUserSettings)
-    win.loadFile(join(__dirname,'src','index.html'))
+    win.loadFile(path.join(__dirname,'src','index.html'))
 
     //Graceful display of renderer window
     win.once('ready-to-show', () => {
