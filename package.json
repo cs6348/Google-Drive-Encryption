@@ -18,5 +18,9 @@
   "homepage": "https://github.com/Ali-Sbeiti/Application-Security-Project#readme",
   "devDependencies": {
     "electron": "^4.1.4"
+  },
+  "dependencies": {
+    "googleapis": "^39.2.0",
+    "node-static": "^0.7.11"
   }
 }
