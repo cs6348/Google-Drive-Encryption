@@ -20,12 +20,19 @@ const getUserSettings = {
 function launchApp(){
     win = new BrowserWindow(getUserSettings);
 
+    //Clear Cache for changes
+    const ses = win.webContents.session;
+    ses.clearCache(() => {
+        console.log("Cache Cleared")
+    });
+
     //Application page now hosted on localhost
     //Because of Google Auth redirect
     let server = new BrowserWindow(localWebConfig);
     server.loadURL(path.join(__dirname,'src','renderer','server.html'));
 
     win.loadURL('http://localhost:8881');
+    //win.loadFile(path.join(__dirname,'src','pages','index.html'));
 
     //Graceful display of renderer window - When Ready
     win.once('ready-to-show', () => {
