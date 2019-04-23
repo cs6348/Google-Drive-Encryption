@@ -1,4 +1,5 @@
-import {google} from 'googleapis';
+const {google} = require('googleapis');
+const {ipcRenderer} = require('electron');
 
 //TUDO: This is from the test Web App API on Ali's Personal Google Account, change it later.
 //TUDO: Google might require us to provide a domain to the API for complete Auth, we might have to launch a local webserver and connect to localhost :(
@@ -16,6 +17,7 @@ function urlGoogle(){
     const auth = newAuth();
     const url = getConnectionUrl(auth);
     console.log("GOOGLE SIGN ON URL: " + url);
+    ipcRenderer.send('googleRedirect', url);
     return url;
 }
 
@@ -27,7 +29,6 @@ function newAuth(){
         googleAPI.redirect
     )
 }
-
 
 function getConnectionUrl(auth){
     return auth.generateAuthUrl({

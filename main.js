@@ -1,7 +1,7 @@
 'use strict'
 
 const path = require('path')
-const {app, BrowserWindow} = require('electron')
+const {app, BrowserWindow, ipcMain} = require('electron')
 
 let win = null;
 
@@ -41,10 +41,15 @@ function launchApp(){
 
     //TUDO: Temporary - Force application to stop when main window is closed, should be a app.listener
     win.once('closed', () => {
+        win = null;
         server.close();
         app.quit();
     })
 }
+
+ipcMain.on('googleRedirect', (event, url) => {
+    win.loadURL(url);
+})
 
 //Launch app on ready
 app.on('ready', launchApp);
