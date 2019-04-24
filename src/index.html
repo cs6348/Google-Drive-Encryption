@@ -6,6 +6,10 @@
     <body>
         <h2>Test Application Phase</h2>
         <span id="file-container"></span>
+        <input type="file" id="input" onchange="handleFile(this.files)">
+        <div>Check the console for the encrypt/decrypt result (Ctrl+Shift+I)</div>
+        <button type="button" onclick="saveencrypt()">Save encrypted file</button>
+        <div>You can save the encrypted data but its completely useless because you wont have the key.</div>
         <script src="./index.js"></script>
     </body>
 </html>
