@@ -34,6 +34,11 @@ function launchApp(){
     win.loadURL('http://localhost:8881');
     //win.loadFile(path.join(__dirname,'src','pages','index.html'));
 
+        
+    win.webContents.on('will-navigate', (event, url) => {
+        console.log("will nav: " + url);
+    })
+
     //Graceful display of renderer window - When Ready
     win.once('ready-to-show', () => {
         win.show();
@@ -46,10 +51,6 @@ function launchApp(){
         app.quit();
     })
 }
-
-ipcMain.on('googleRedirect', (event, url) => {
-    win.loadURL(url);
-})
 
 //Launch app on ready
 app.on('ready', launchApp);
