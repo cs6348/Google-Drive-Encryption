@@ -16,9 +16,12 @@ function getURL(auth) {
         scope: config.scopes
     });
 }
+
 function authRequest() {
     const auth = newAuthRequest();
     const url = getURL(auth);
     console.log('GOOGLE AUTH URL: ' + url);
     return url;
 }
+
+authRequest();
