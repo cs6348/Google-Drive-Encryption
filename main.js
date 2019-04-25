@@ -3,23 +3,31 @@
 const path = require('path');
 const {app, BrowserWindow} = require('electron');
 const {launchServer} = require('./localServer');
-const global = require('./config/config');
+const config = require('./config/config');
 
 let win = null;
 
 function launchApp(){
-    win = new BrowserWindow({width: 600, height: 600});
+    win = new BrowserWindow(config.winConfig);
 
     //Start local server; needed for login redirect
-    console.log('\x1b[34m', 'Starting Development Server on ' + global.url + '...', '\x1b[0m');
-    try {
+    //TUDO: Am I using Async correct here? lol
+    try { 
+        //Browser Cache keeps index.html from updated sometimes
+        //Clear cache before loading server
+        win.webContents.session.clearCache(() => {
+                console.log('\tCleared Browser Cahce');
+            }
+        );
         launchServer();
-    }catch(e) {
-        console.log('Failed to initialize application:\n' + e);
+    }
+    catch(e) { 
+        console.log('Failed to initialize application:\n' + e); 
+        app.quit();
     }
 
     //win loads application address
-    win.loadURL('http://' + global.url);
+    win.loadURL(config.url);
 
     //Graceful display of renderer window
     win.once('ready-to-show', () => {

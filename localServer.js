@@ -1,12 +1,15 @@
-const static = require('node-static');
-var file = new static.Server('src/pages');
+const config = require('./config/config');
+const path = require('path');
+const express = require('express');
+const app = express();
 
 async function launchServer() {
-    require('http').createServer(function(request, response){
-        request.addListener('end', function () {
-            file.serve(request,response);
-        }).resume();
-    }).listen(8881);
+    console.log('\x1b[34m', 'Starting Development Server on ' + config.url + '...', '\x1b[0m');
+    app.use(express.static(path.join(__dirname, 'public')));
+    app.get('/', (req, res) => {
+        res.redirect('pages/index.html');
+    });
+    app.listen(config.port);
 }
 
 module.exports.launchServer = launchServer;

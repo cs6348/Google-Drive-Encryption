@@ -20,6 +20,6 @@
     "electron": "^4.1.4"
   },
   "dependencies": {
-    "node-static": "^0.7.11"
+    "express": "^4.16.4"
   }
 }
