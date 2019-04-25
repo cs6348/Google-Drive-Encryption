@@ -1,4 +1,4 @@
-//TUDO: Do we want to make this a stateful configuration? I was thinking maybe we can store accounts instances here?
+//TUDO: Do we want to make this a stateful configuration? I was thinking maybe we can store accounts here?
 class Config {
     constructor() {
         
@@ -7,8 +7,10 @@ class Config {
         this.port = '3000';
         this.url = 'http://' + this.address + ':' + this.port;
         //Google API
-        this.clientAPI = '';
-        this.clientSecret = '';
+        this.clientID = '591099849229-64p9t235epvh8t48ruirt0n2ag8qs502.apps.googleusercontent.com';
+        this.clientSecret = 'I31wkLGps8aQDQnleIvp_Qv2';
+        this.scopes = ['https://www.googleapis.com/auth/drive'];
+        
         //Main Window configuration
         this.winConfig = {
             width: 800,
