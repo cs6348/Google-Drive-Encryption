@@ -9,22 +9,21 @@ const generateOAuth = (req, res, next) => {
     res.redirect(config.loginURL);
     next();
 }
+
 const getCode = (req, res, next) => {
-    console.log("oriURL: " + req.originalUrl);
     let code = null;
-    let index = req.originalUrl.indexOf("=");
-    //TUDO: Maybe replace this index check with one that find the substring "code="
+    const index = req.originalUrl.indexOf("=");
     if(req.originalUrl.indexOf("?code=") != -1) {
         code = req.originalUrl.slice(index + 1, req.originalUrl.length);
         config.setCode(code);
+        //DEBUG
+        console.log("Code Returned: " + config.clientCode);
     } else {
         res.redirect('/login');
         //TUDO: Error message when Google does not return 
         next();
         return;
     }
-    console.log("cutURL: " + code);
-    console.log("configURL: " + config.clientCode);
     next();
 }
 
