@@ -29,10 +29,10 @@ function launchApp(){
 
     // //Handle redirection requests
     // win.webContents.on('will-navigate', (event, url) => {
-    //     console.log('redirect request: ' + url);
+    //     console.log('++redirect request: ' + url);
     //     //win.loadURL(url);
     // });
-
+    
     //Graceful display of renderer window
     win.once('ready-to-show', () => {
         win.show();
