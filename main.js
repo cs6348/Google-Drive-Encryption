@@ -1,22 +1,38 @@
 'use strict'
 
-const path = require('path')
-const {app, BrowserWindow} = require('electron')
+const path = require('path');
+const {app, BrowserWindow, ipcMain} = require('electron');
+const {launchServer} = require('./localServer');
+const config = require('./config/config');
 
 let win = null;
 
-//TUDO: get user prefs from some config file
-const getUserSettings = {
-    width: 1000,
-    height: 650,
-    show: false
-}
-
-//TUDO: change to render process
 function launchApp(){
-    win = new BrowserWindow(getUserSettings)
-    win.loadFile(path.join(__dirname,'src','index.html'))
+    win = new BrowserWindow(config.winConfig);
 
+    //Start local server; needed for login redirect
+    //TUDO: Am I using Async correct here?
+    try { 
+        //Browser Cache keeps pages from updating sometimes
+        //Clear cache before launching server
+        win.webContents.session.clearCache(() => { console.log('Cleared Browser Cahce'); } );
+        launchServer();
+    }
+    catch(e) { 
+        console.log('Failed to initialize application:\n' + e); 
+        app.quit();
+        process.exit();
+    }
+
+    //win loads application address
+    win.loadURL(config.url);
+
+    // //Handle redirection requests
+    // win.webContents.on('will-navigate', (event, url) => {
+    //     console.log('++redirect request: ' + url);
+    //     //win.loadURL(url);
+    // });
+    
     //Graceful display of renderer window
     win.once('ready-to-show', () => {
         win.show();
@@ -24,9 +40,9 @@ function launchApp(){
 }
 
 //Launch app on ready
-app.on('ready', launchApp)
+app.on('ready', launchApp);
 
 //Exit process when user closes all GUI
 app.on('window-all-closed', () => {
     app.quit();
-})
+});
