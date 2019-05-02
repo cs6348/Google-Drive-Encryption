@@ -18,6 +18,7 @@ const getCode = (req, res, next) => {
         config.setCode(code);
         //DEBUG
         console.log("Code Returned: " + config.clientCode);
+        config.generateToken();
     } else {
         res.redirect('/login');
         //TUDO: Error message when Google does not return 
@@ -27,7 +28,7 @@ const getCode = (req, res, next) => {
     next();
 }
 
-async function launchServer() {
+function launchServer() {
     //Use public directory - required if we want to serve styles/js in seperate sub-directories
     app.use(express.static(path.join(__dirname, 'public')));
     //Root

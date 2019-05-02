@@ -9,11 +9,13 @@ class Config {
         this.port = '3000';
         this.url = 'http://' + this.address + ':' + this.port;
         //Google API
+        this.auth = null;
         this.clientID = '591099849229-64p9t235epvh8t48ruirt0n2ag8qs502.apps.googleusercontent.com';
         this.clientSecret = 'I31wkLGps8aQDQnleIvp_Qv2';
         this.clientCode = null;
+        this.clientToken = null;
 
-        this.scopes = ['https://www.googleapis.com/auth/drive'];
+        this.scopes = ['https://www.googleapis.com/auth/drive.readonly'];
         this.urlRedirect = this.url + '/drive';
         this.loginURL = null;
         
@@ -29,39 +31,59 @@ class Config {
         }
     }
     //Get/Set client code sent by Google
-    setCode(code){ this.clientCode = code
-
-        //TEST Drive function
-        const drive = google.drive({version: 'v3', code});
-        drive.files.list({
-            pageSize: 10,
-            fields: 'nextPageToken, files(id,name)'
-        }, (err, res) => {
-            if(err) return console.log("API ERROR: " + err);
-            const files = res.data.files;
-            if(files.length){
-                console.log('files:');
-                files.map((file) => {
-                    console.log(`${file.name} (${file.id})`);
-                });
-            } else { console.log('No files'); }
-        });
-
-    }
+    setCode(code){ this.clientCode = code }
     getCode(){ return this.clientCode }
+
     //Generate an Auth request url from Google Api Console
     generateAuth(){
-        let auth = new google.auth.OAuth2(
+        this.auth = new google.auth.OAuth2(
             this.clientID,
             this.clientSecret,
             this.urlRedirect
         );
-        let url = auth.generateAuthUrl({
+        let url = this.auth.generateAuthUrl({
             access_type: 'offline',
             prompt: 'consent',
             scope: this.scopes
         });
         this.loginURL = url;    
+    }
+
+    generateToken(){
+        this.auth.getToken(this.clientCode, (err, token) => {
+            if (err) 
+                return console.error('Error retrieving token: ' + err);
+            else {
+                //console.log(token);
+                this.auth.credentials = token;
+                this.clientToken = token;
+                this.listFiles();
+            }
+        });
+    }
+
+    listFiles(){
+        //Test Output
+        const drive = google.drive({version: 'v3', auth: this.auth});
+        drive.files.list({
+            pageSize: 50,
+            fields: 'nextPageToken, files(id, name)'
+        }, 
+        (err, res) => {
+            if (err) {
+                console.log('Error getting drive listing' + err);
+                return;
+            }
+            const response = res.data.files;
+                if(response.length){
+                    console.log('Files:\n-----------------------------------------');
+                    response.map((file) => {
+                        console.log(`${file.name} : (${file.id})`);
+                    });
+                } else {
+                    console.log('No Files :(');
+                }
+        });
     }
 }
 
