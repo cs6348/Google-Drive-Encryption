@@ -57,14 +57,15 @@ class Config {
                 //console.log(token);
                 this.auth.credentials = token;
                 this.clientToken = token;
-                this.listFiles();
+                //this.listFiles();
             }
         });
     }
 
-    listFiles(){
+    listFiles(callback){
         //Test Output
         const drive = google.drive({version: 'v3', auth: this.auth});
+        var folder = [];
         drive.files.list({
             pageSize: 50,
             fields: 'nextPageToken, files(id, name)'
@@ -76,10 +77,12 @@ class Config {
             }
             const response = res.data.files;
                 if(response.length){
-                    console.log('Files:\n-----------------------------------------');
+                    //console.log('Files:\n-----------------------------------------');
                     response.map((file) => {
-                        console.log(`${file.name} : (${file.id})`);
+                        //console.log(`${file.name} : (${file.id})`);
+                        folder.push([file.name,file.id]);
                     });
+                    callback(folder);
                 } else {
                     console.log('No Files :(');
                 }

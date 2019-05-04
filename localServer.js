@@ -46,4 +46,16 @@ function launchServer() {
     });
 }
 
+var ipc = require('electron').ipcMain;
+
+ipc.on('invokeAction', function(event, data){
+    function sendData(data)
+    {
+        console.log(data[0][0]);
+        console.log('Run Good');
+        event.sender.send('actionReply', data);
+    }
+    config.listFiles(sendData);
+});
+
 module.exports.launchServer = launchServer;
