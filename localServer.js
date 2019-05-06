@@ -41,7 +41,7 @@ function launchServer() {
     //app.get('/drive', getCode);
     //Set path aliases for other pages
     //app.use('/login', express.static(path.join(__dirname, 'public', 'pages/login.html')));
-    app.use(config.paths.drive, express.static(path.join(__dirname, 'public', 'pages' + config.paths.drive + '.html')));
+    app.use(config.paths.drive, express.static(path.join(__dirname, 'public', 'pages', config.paths.drive, '.html')));
 
     app.listen(config.port, (/* req, res */) => {
         console.log('\033c');
