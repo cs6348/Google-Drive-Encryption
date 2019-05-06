@@ -34,6 +34,7 @@ function launchServer() {
         getCode(req,res,next);
         config.generateToken(next);
     }, (req, res, next) => {
+        //On Successful token generation, direct to drive page
         res.redirect('/drive');
         next();
     }); 
