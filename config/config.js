@@ -25,7 +25,7 @@ class Config {
 
         //Google Auth
         this.scopes = ['https://www.googleapis.com/auth/drive.readonly'];
-        this.urlRedirect = this.url + '/direct';
+        this.urlRedirect = this.url + this.paths.direct;
         this.loginURL = null;
         
         //Main Window configuration
@@ -76,8 +76,8 @@ class Config {
         const drive = google.drive({version: 'v3', auth: this.auth});
         var folder = [];
         drive.files.list({
-            pageSize: 50,
-            fields: 'nextPageToken, files(id, name)'
+            pageSize: 51,
+            fields: 'nextPageToken, files(id, name, thumbnailLink, iconLink)'
         }, 
         (err, res) => {
             if (err) {
@@ -89,7 +89,7 @@ class Config {
                     //console.log('Files:\n-----------------------------------------');
                     response.map((file) => {
                         //console.log(`${file.name} : (${file.id})`);
-                        folder.push([file.name,file.id]);
+                        folder.push([file.name,file.id, file.thumbnailLink, file.iconLink]);
                     });
                     callback(folder);
                 } else {
