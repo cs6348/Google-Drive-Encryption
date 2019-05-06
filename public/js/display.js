@@ -12,8 +12,10 @@ function printFiles(folder)
         <div class="item-inner">
         <img class="thumb" src=${folder[i][2]} onerror="this.onerror=null;this.src='../icons/fileicon.png';"> 
         </br>
+        <div class="info-box">
         <img src=${folder[i][3]}> 
         </br> ${folder[i][0]}
+        </div>
         </div>`;
 
         var box = document.getElementById("folder");

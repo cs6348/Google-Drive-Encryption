@@ -5,26 +5,31 @@
         <link rel="stylesheet" href="../css/index.css"/>
         <style>
             .drive-item{
-                text-align: center;
                 display: inline-block;
-                width: 33%;
-                max-height: 400px;
-                overflow: hidden;
-            }
-            .drive-item .thumb{
-                width: 90%;
+                width: 25%;
                 height: auto;
-                overflow: hidden;
             }
             .drive-item .item-inner{
-                padding: 5px;
-                margin: 5px 10px;
-                border: 1px solid #000;
-                overflow: inherit;
+                border: solid #e5e5e5 1px;
             }
             .item-inner:hover{
+                background-color: #e5e5e5;
                 cursor: pointer;
-                background-color: #e3e3e3;
+            }
+            .drive-item .thumb{
+                display: block;
+                padding: 10px 0;
+               width: 95%;
+               height: 200px;
+               object-fit: cover;
+               object-position: center;
+               margin: auto;
+
+            }
+            .drive-item .info-box{
+                height: 60px;
+                overflow: hidden;
+                text-align: center;
             }
         </style>
     </head>
