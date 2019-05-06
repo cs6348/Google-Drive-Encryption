@@ -14,7 +14,16 @@ class Config {
         this.clientSecret = 'I31wkLGps8aQDQnleIvp_Qv2';
         this.clientCode = null;
         this.clientToken = null;
+        
+        //local web paths
+        this.paths = {
+            index: '/index',
+            drive: '/drive',
+            login: '/login',
+            direct: '/direct'
+        };
 
+        //Google Auth
         this.scopes = ['https://www.googleapis.com/auth/drive.readonly'];
         this.urlRedirect = this.url + '/direct';
         this.loginURL = null;
