@@ -16,7 +16,7 @@ class Config {
         this.clientToken = null;
 
         this.scopes = ['https://www.googleapis.com/auth/drive.readonly'];
-        this.urlRedirect = this.url + '/drive';
+        this.urlRedirect = this.url + '/direct';
         this.loginURL = null;
         
         //Main Window configuration
@@ -49,15 +49,15 @@ class Config {
         this.loginURL = url;    
     }
 
-    generateToken(){
+    generateToken(callback){
         this.auth.getToken(this.clientCode, (err, token) => {
             if (err) 
                 return console.error('Error retrieving token: ' + err);
             else {
-                //console.log(token);
                 this.auth.credentials = token;
                 this.clientToken = token;
                 //this.listFiles();
+                callback();
             }
         });
     }

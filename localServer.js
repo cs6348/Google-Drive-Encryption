@@ -4,7 +4,6 @@ const express = require('express');
 const app = express();
 
 const generateOAuth = (req, res, next) => {
-    console.log('LOGGED ' + req.method + ' REQ: ' + req.url);
     config.generateAuth();
     res.redirect(config.loginURL);
     next();
@@ -16,16 +15,12 @@ const getCode = (req, res, next) => {
     if(req.originalUrl.indexOf("?code=") != -1) {
         code = req.originalUrl.slice(index + 1, req.originalUrl.length);
         config.setCode(code);
-        //DEBUG
-        console.log("Code Returned: " + config.clientCode);
-        config.generateToken();
     } else {
         res.redirect('/login');
         //TUDO: Error message when Google does not return 
-        next();
         return;
     }
-    next();
+    return
 }
 
 function launchServer() {
@@ -35,7 +30,14 @@ function launchServer() {
     app.use('/', express.static(path.join(__dirname, 'public', 'pages')));
     //Custom middleware on GET request to Google sign on
     app.get('/login', generateOAuth);
-    app.get('/drive', getCode);
+    app.get('/direct', (req, res, next) => {
+        getCode(req,res,next);
+        config.generateToken(next);
+    }, (req, res, next) => {
+        res.redirect('/drive');
+        next();
+    }); 
+    //app.get('/drive', getCode);
     //Set path aliases for other pages
     //app.use('/login', express.static(path.join(__dirname, 'public', 'pages/login.html')));
     app.use('/drive', express.static(path.join(__dirname, 'public', 'pages/drive.html')));
