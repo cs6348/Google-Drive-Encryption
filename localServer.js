@@ -4,7 +4,6 @@ const express = require('express');
 const app = express();
 
 const generateOAuth = (req, res, next) => {
-    console.log('LOGGED ' + req.method + ' REQ: ' + req.url);
     config.generateAuth();
     res.redirect(config.loginURL);
     next();
@@ -16,16 +15,12 @@ const getCode = (req, res, next) => {
     if(req.originalUrl.indexOf("?code=") != -1) {
         code = req.originalUrl.slice(index + 1, req.originalUrl.length);
         config.setCode(code);
-        //DEBUG
-        console.log("Code Returned: " + config.clientCode);
-        config.generateToken();
     } else {
-        res.redirect('/login');
+        res.redirect(config.paths.login);
         //TUDO: Error message when Google does not return 
-        next();
         return;
     }
-    next();
+    return
 }
 
 function launchServer() {
@@ -34,16 +29,36 @@ function launchServer() {
     //Root
     app.use('/', express.static(path.join(__dirname, 'public', 'pages')));
     //Custom middleware on GET request to Google sign on
-    app.get('/login', generateOAuth);
-    app.get('/drive', getCode);
+    app.get(config.paths.login, generateOAuth);
+    app.get(config.paths.direct, (req, res, next) => {
+        getCode(req,res,next);
+        config.generateToken(next);
+    }, (req, res, next) => {
+        //On Successful token generation, direct to drive page
+        res.redirect(config.paths.drive);
+        next();
+    }); 
+    //app.get('/drive', getCode);
     //Set path aliases for other pages
     //app.use('/login', express.static(path.join(__dirname, 'public', 'pages/login.html')));
-    app.use('/drive', express.static(path.join(__dirname, 'public', 'pages/drive.html')));
+    app.use(config.paths.drive, express.static(path.join(__dirname, 'public', 'pages' + config.paths.drive + '.html')));
 
     app.listen(config.port, (/* req, res */) => {
         console.log('\033c');
         console.log('\x1b[34m', 'Local Server running on ' + config.url, '\x1b[0m');
     });
 }
+
+var ipc = require('electron').ipcMain;
+
+ipc.on('invokeAction', function(event, data){
+    function sendData(data)
+    {
+        console.log(data[0][0]);
+        console.log('Run Good');
+        event.sender.send('actionReply', data);
+    }
+    config.listFiles(sendData);
+});
 
 module.exports.launchServer = launchServer;

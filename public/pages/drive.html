@@ -1,1 +1,41 @@
-Placeholder
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Drive Encrypt Test Application</title>
+        <link rel="stylesheet" href="../css/index.css"/>
+        <style>
+            .drive-item{
+                display: inline-block;
+                width: 25%;
+                height: auto;
+            }
+            .drive-item .item-inner{
+                border: solid #e5e5e5 1px;
+            }
+            .item-inner:hover{
+                background-color: #e5e5e5;
+                cursor: pointer;
+            }
+            .drive-item .thumb{
+                display: block;
+                padding: 10px 0;
+               width: 95%;
+               height: 200px;
+               object-fit: cover;
+               object-position: center;
+               margin: auto;
+
+            }
+            .drive-item .info-box{
+                height: 60px;
+                overflow: hidden;
+                text-align: center;
+            }
+        </style>
+    </head>
+    <body>
+        <h2>Google Drive Folder</h2>
+        <script src='../js/display.js'></script>
+        <div id="folder"></div>
+    </body>
+</html>

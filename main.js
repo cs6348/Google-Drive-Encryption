@@ -15,7 +15,7 @@ function launchApp(){
     try { 
         //Browser Cache keeps pages from updating sometimes
         //Clear cache before launching server
-        win.webContents.session.clearCache(() => { console.log('Cleared Browser Cahce'); } );
+        win.webContents.session.clearCache(() => { console.log('+ Cleared Browser Cache +'); } );
         launchServer();
     }
     catch(e) { 

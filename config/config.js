@@ -14,9 +14,18 @@ class Config {
         this.clientSecret = 'I31wkLGps8aQDQnleIvp_Qv2';
         this.clientCode = null;
         this.clientToken = null;
+        
+        //local web paths
+        this.paths = {
+            index: '/index',
+            drive: '/drive',
+            login: '/login',
+            direct: '/direct'
+        };
 
+        //Google Auth
         this.scopes = ['https://www.googleapis.com/auth/drive.readonly'];
-        this.urlRedirect = this.url + '/drive';
+        this.urlRedirect = this.url + this.paths.direct;
         this.loginURL = null;
         
         //Main Window configuration
@@ -49,25 +58,26 @@ class Config {
         this.loginURL = url;    
     }
 
-    generateToken(){
+    generateToken(callback){
         this.auth.getToken(this.clientCode, (err, token) => {
             if (err) 
                 return console.error('Error retrieving token: ' + err);
             else {
-                //console.log(token);
                 this.auth.credentials = token;
                 this.clientToken = token;
-                this.listFiles();
+                //this.listFiles();
+                callback();
             }
         });
     }
 
-    listFiles(){
+    listFiles(callback){
         //Test Output
         const drive = google.drive({version: 'v3', auth: this.auth});
+        var folder = [];
         drive.files.list({
-            pageSize: 50,
-            fields: 'nextPageToken, files(id, name)'
+            pageSize: 51,
+            fields: 'nextPageToken, files(id, name, thumbnailLink, iconLink)'
         }, 
         (err, res) => {
             if (err) {
@@ -76,10 +86,12 @@ class Config {
             }
             const response = res.data.files;
                 if(response.length){
-                    console.log('Files:\n-----------------------------------------');
+                    //console.log('Files:\n-----------------------------------------');
                     response.map((file) => {
-                        console.log(`${file.name} : (${file.id})`);
+                        //console.log(`${file.name} : (${file.id})`);
+                        folder.push([file.name,file.id, file.thumbnailLink, file.iconLink]);
                     });
+                    callback(folder);
                 } else {
                     console.log('No Files :(');
                 }
