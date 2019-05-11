@@ -88,8 +88,8 @@ class Config {
             callback(folder);
           } else {
             console.log('No Files :(');
-            this.handleDocuments()
           }
+          this.handleDocuments()
         });
   }
 
@@ -146,7 +146,7 @@ class Config {
         }
 
         let iv = crypto.randomBytes(16)
-        let cipher = crypto.createCipheriv('aes-256-gcm', key, iv)
+        let cipher = crqypto.createCipheriv('aes-256-gcm', key, iv)
         let ciphertext = cipher.update(rawfilecontents, 'binary', 'binary')
 
         console.log('cipher is of type' + typeof (ciphertext))
