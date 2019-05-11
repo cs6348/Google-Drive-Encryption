@@ -95,15 +95,8 @@ class Config {
 
   uploadfile(fileName, ciphertext, iv, callback) {
     const drive = google.drive({version: 'v3', auth: this.auth});
-    var fileMetadata = {
-      'name': fileName + '.jpg',
-      'parents': ['appDataFolder']
-    };
-    var media = {
-      mimeType: 'image/jpeg',
-      // body: fs.createReadStream('files/photo.jpg')
-      body: ciphertext
-    };
+    var fileMetadata = {'name': fileName, 'parents': ['appDataFolder']};
+    var media = {mimeType: 'application/octet-stream', body: ciphertext};
     drive.files.create(
         {resource: fileMetadata, media: media, fields: 'id'},
         function(err, file) {
