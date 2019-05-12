@@ -3,39 +3,27 @@
     <head>
         <title>Drive Encrypt Test Application</title>
         <link rel="stylesheet" href="../css/index.css"/>
-        <style>
-            .drive-item{
-                display: inline-block;
-                width: 25%;
-                height: auto;
-            }
-            .drive-item .item-inner{
-                border: solid #e5e5e5 1px;
-            }
-            .item-inner:hover{
-                background-color: #e5e5e5;
-                cursor: pointer;
-            }
-            .drive-item .thumb{
-                display: block;
-                padding: 10px 0;
-               width: 95%;
-               height: 200px;
-               object-fit: cover;
-               object-position: center;
-               margin: auto;
-
-            }
-            .drive-item .info-box{
-                height: 60px;
-                overflow: hidden;
-                text-align: center;
-            }
-        </style>
+        <!-- Bootstrap CDN -->
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+        <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+        <!-- ENDOF Bootstrap CDN -->
     </head>
     <body>
         <h2>Google Drive Folder</h2>
         <script src='../js/display.js'></script>
-        <div id="folder"></div>
+        <!-- File Object Table -->
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Icon</th>
+                    <th scope="col">File Name</th>
+                </tr>
+            </thead>
+            <tbody id="fileCollection">
+            </tbody>
+        </table>
     </body>
 </html>
