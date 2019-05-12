@@ -163,6 +163,7 @@ class Config {
         .catch(function(err) {
           console.log('Error during download', err);
         })
+  }
 
   deleteFile(fileID){
     const drive = google.drive({version: 'v3', auth: this.auth});
