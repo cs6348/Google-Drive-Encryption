@@ -56,7 +56,7 @@ ipc.on('invokeAction', function (event, data) {
         console.log('Run Good');
         event.sender.send('actionReply', data);
     }
-    config.listFiles(sendData);
+    config.listFiles(sendData, event);
 });
 
 module.exports.launchServer = launchServer;

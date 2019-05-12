@@ -17,7 +17,7 @@ function printFiles(folder)
         });
     }
 }
-    ipc.once('actionReply', function(event, response){
+    ipc.on('actionReply', function(event, response){
         printFiles(response);
     })
     ipc.send('invokeAction', 'someData');
