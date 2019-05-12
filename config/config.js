@@ -32,7 +32,7 @@ class Config {
         };
 
         //Google Auth
-        this.scopes = ['https://www.googleapis.com/auth/drive'];
+        this.scopes = ['https://www.googleapis.com/auth/drive.appfolder'];
         this.urlRedirect = this.url + this.paths.direct;
         this.loginURL = null;
         
