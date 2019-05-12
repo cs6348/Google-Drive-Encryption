@@ -36,7 +36,8 @@ class Config {
     this.winConfig = {
       width: 750,
       height: 800,
-      show: false
+      show: false,
+      webPreferences: {nodeIntegration: true}
     }
                      // BrowserWindow Object  S-Linking? TUDO
                      this.windows = {
@@ -315,6 +316,40 @@ class Config {
             if (err) throw err
               return callback(rawfilecontents)
           })
+    })
+
+
+    fs.stat('.privatekey', function(err, stats) {
+      if (err) {
+        if (err.code == 'ENOENT') {  // if key doesnt exist, make it
+          crypto.generateKeyPair(
+              'rsa', {
+                modulusLength: 4096,
+                publicKeyEncoding: {type: 'spki', format: 'pem'},
+                privateKeyEncoding: {
+                  type: 'pkcs8',
+                  format: 'pem',
+                  cipher: 'aes-256-cbc',
+                  passphrase: 'top secret'
+                }
+              },
+              (err, publicKey, privateKey) => {
+                // Handle errors and use the generated key pair.
+                // let key = crypto.randomBytes(32);
+                console.log('GENERATED KEY PAIR')
+                console.log(publicKey)
+                fs.writeFile('.privatekey', privateKey, function(err) {
+                  if (err) throw err;
+                })
+                fs.writeFile('.publickey', publicKey, function(err) {
+                  if (err) throw err;
+                })
+                return callback(key);
+              });
+
+        } else
+          throw err  // throw other errors
+      }
     })
   }
 
