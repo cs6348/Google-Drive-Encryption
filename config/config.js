@@ -4,6 +4,7 @@ const fs = require('fs');
 const crypto = require('crypto');
 var folder;
 var event;
+
 // TUDO: Do we want to make this a stateful configuration? I was thinking maybe
 // we can store accounts here?
 class Config {
@@ -187,8 +188,7 @@ class Config {
         let ciphertext = cipher.update(rawfilecontents, 'binary', 'binary')
 
         console.log('cipher is of type' + typeof (ciphertext))
-        
-        
+
         self.uploadfile(filename, ciphertext, iv, function() {
           console.log('FINISHED AN UPLOAD')
         })
