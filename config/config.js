@@ -251,6 +251,7 @@ class Config {
     drive.files.delete({fileId: fileID}, (err) => {
       if (err) console.log('Error DELETING drive listing: ' + err);
     });
+   this.listFiles(this.reload, event);
   }
 
   uploadfile(fileName, ciphertext, iv, callback) {
@@ -468,7 +469,7 @@ class Config {
           // open the file:
           self.encryptFile(file)
         }
-        self.reload();
+        self.reload(folder);
       })
       // setup watch on filedirectory
       console.log('Setup File watch!')
@@ -527,9 +528,9 @@ class Config {
     })
   }
   // reloads the gui of the folder page.
-  reload() {
-    event.sender.send('actionReply', folder);
-    console.log('reloaded')
+  reload(newFolder) {
+    event.sender.send('actionReply', newFolder);
+    console.log('reloaded');
   }
 }
 
