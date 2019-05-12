@@ -97,63 +97,75 @@ class Config {
             // var dest = fs.createWriteStream('./.downloading/' + obj[0] +
             // '.dl');
             if (obj[0] == 'TESTDOWNLOAD') {
-              console.log('trying to download TESTDOWNLOAD')
-              drive.files
-                  .get({
-                    fileId: obj[1],
-                    fields: '*'
-                    //   'name, appProperties, createdTime, modifiedTime,
-                    //   modifiedByMeTime'
-
-                  })
-                  .then(function(file) {
-                    console.log('Downloaded: ' + file.data.name);
-                    console.dir(file.data)
-                  })
-                  .catch(function(err) {
-                    console.log('Error during download', err);
-                  })
+              console.log('trying to download TESTDOWNLOAD');
+              this.downloadfile(obj[1])
             }
           }
         });
   }
 
+
+  downloadfile(fileid) {
+    const drive = google.drive({version: 'v3', auth: this.auth});
+
+    drive.files
+        .get({
+          fileId: fileid,
+          fields: '*'
+          // 'name, appProperties, createdTime, modifiedTime, modifiedByMeTime'
+
+        })
+        .then(function(file) {
+          console.log('Downloaded: ' + file.data.name);
+          console.dir(file)
+          // get the IV here somehow, and then download again but get the data
+          // instead of properties.
+          drive.files.get({fileId: fileid, alt: 'media'})
+              .then(function(filewithdata) {
+                console.dir('FILE CONTENTS:')
+                console.dir(filewithdata.data)
+              })
+              .catch(function(err) {
+                console.log('Error during second download', err);
+              })
+        })
+        .catch(function(err) {
+          console.log('Error during download', err);
+        })
+  }
+
   uploadfile(fileName, ciphertext, iv, callback) {
     const drive = google.drive({version: 'v3', auth: this.auth});
-    var fileId = "";
+    var fileId = '';
     var fileMetadata;
     var media = {mimeType: 'application/octet-stream', body: ciphertext};
     var i;
-    for(i = 0; i<folder.length; i++)
-    { 
-      if(fileName == folder[i][0])
-        {
-          //console.log("Match: "+folder[i][0]);
-          fileId = folder[i][1];
-          i = folder.length;
-        }
+    for (i = 0; i < folder.length; i++) {
+      if (fileName == folder[i][0]) {
+        // console.log("Match: "+folder[i][0]);
+        fileId = folder[i][1];
+        i = folder.length;
+      }
     }
-    if(fileId != "")
-    {
+    if (fileId != '') {
       fileMetadata = {'name': fileName, 'IV': iv};
       console.log(fileId);
-      drive.files.update({fileId: fileId, resource: fileMetadata, media: media, fields: 'id'})
-    }
-    else
-    {
+      drive.files.update(
+          {fileId: fileId, resource: fileMetadata, media: media, fields: 'id'})
+    } else {
       fileMetadata = {'name': fileName, 'parents': ['appDataFolder'], 'IV': iv};
-    drive.files.create(
-        {resource: fileMetadata, media: media, fields: 'id'},
-        function(err, file) {
-          if (err) {
-            // Handle error
-            console.error(err);
-          } else {
-            console.log(
-                'Uploaded file \"' + fileName + '\", File Id: ', file.id);
-          }
-        });
-      }
+      drive.files.create(
+          {resource: fileMetadata, media: media, fields: 'id'},
+          function(err, file) {
+            if (err) {
+              // Handle error
+              console.error(err);
+            } else {
+              console.log(
+                  'Uploaded file \"' + fileName + '\", File Id: ', file.id);
+            }
+          });
+    }
     // Still need to attack the IV to the file
     callback()
   }
@@ -180,20 +192,20 @@ class Config {
     })
   }
 
-  shareFile(filename, user){
-    //download filename's key file of username user
+  shareFile(filename, user) {
+    // download filename's key file of username user
 
-    //download key sharing file 
+    // download key sharing file
 
-    //decrypt the symmetric key with your private key pair
+    // decrypt the symmetric key with your private key pair
 
-    //fetch user's public key from the public key folder
+    // fetch user's public key from the public key folder
 
-    //encrypt symmetric key with user's public key
+    // encrypt symmetric key with user's public key
 
-    //append to the filename's key file
+    // append to the filename's key file
 
-    //overwrite key file with new key file
+    // overwrite key file with new key file
   }
   encryptFile(filename) {
     let self = this;  // so we can get `this` inside anonymous functions
@@ -263,9 +275,8 @@ class Config {
       })
     })
   }
-  //reloads the gui of the folder page.
-  reload()
-  {
+  // reloads the gui of the folder page.
+  reload() {
     event.sender.send('actionReply', folder);
   }
 }
