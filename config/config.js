@@ -93,6 +93,28 @@ class Config {
             console.log('No Files :(');
           }
           this.handleDocuments()
+          for (let obj of folder) {
+            // var dest = fs.createWriteStream('./.downloading/' + obj[0] +
+            // '.dl');
+            if (obj[0] == 'TESTDOWNLOAD') {
+              console.log('trying to download TESTDOWNLOAD')
+              drive.files
+                  .get({
+                    fileId: obj[1],
+                    fields: '*'
+                    //   'name, appProperties, createdTime, modifiedTime,
+                    //   modifiedByMeTime'
+
+                  })
+                  .then(function(file) {
+                    console.log('Downloaded: ' + file.data.name);
+                    console.dir(file.data)
+                  })
+                  .catch(function(err) {
+                    console.log('Error during download', err);
+                  })
+            }
+          }
         });
   }
 
@@ -187,7 +209,6 @@ class Config {
         let cipher = crypto.createCipheriv('aes-256-gcm', key, iv)
         let ciphertext = cipher.update(rawfilecontents, 'binary', 'binary')
 
-        console.log('cipher is of type' + typeof (ciphertext))
 
         self.uploadfile(filename, ciphertext, iv, function() {
           console.log('FINISHED AN UPLOAD')
@@ -222,7 +243,7 @@ class Config {
       fs.readdir('./Documents', {withFileTypes: false}, function(err, files) {
         // get the encryption key and encrypt files
         for (var file of files) {
-          console.log(file)
+          // console.log(file)
           // open the file:
           self.encryptFile(file)
         }
