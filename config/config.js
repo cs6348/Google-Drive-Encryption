@@ -1,7 +1,10 @@
+var ipc = require('electron').ipcRenderer;
 const {google} = require('googleapis');
 const fs = require('fs');
 const crypto = require('crypto');
 var folder;
+var event;
+
 // TUDO: Do we want to make this a stateful configuration? I was thinking maybe
 // we can store accounts here?
 class Config {
@@ -62,8 +65,9 @@ class Config {
     });
   }
 
-  listFiles(callback) {
+  listFiles(callback, eventVal) {
     // Test Output
+    event = eventVal;
     const drive = google.drive({version: 'v3', auth: this.auth});
     folder = [];
     drive.files.list(
@@ -116,53 +120,40 @@ class Config {
 
   uploadfile(fileName, ciphertext, iv, callback) {
     const drive = google.drive({version: 'v3', auth: this.auth});
-    var fileId = '';
+    var fileId = "";
     var fileMetadata;
     var media = {mimeType: 'application/octet-stream', body: ciphertext};
     var i;
-    for (i = 0; i < folder.length; i++) {
-      if (fileName == folder[i][0]) {
-        // console.log("Match: "+folder[i][0]);
-        fileId = folder[i][1];
-        i = folder.length;
-      }
-    }
-    if (fileId != '') {
-      fileMetadata = {
-        'name': fileName,
-        'properties': {
-          'IV': iv,
-        },
-        'appProperties': {
-          'IV': iv,
+    for(i = 0; i<folder.length; i++)
+    { 
+      if(fileName == folder[i][0])
+        {
+          //console.log("Match: "+folder[i][0]);
+          fileId = folder[i][1];
+          i = folder.length;
         }
-      };
+    }
+    if(fileId != "")
+    {
+      fileMetadata = {'name': fileName, 'IV': iv};
       console.log(fileId);
-      drive.files.update(
-          {fileId: fileId, resource: fileMetadata, media: media, fields: 'id'})
-    } else {
-      fileMetadata = {
-        'name': fileName,
-        'parents': ['appDataFolder'],
-        'properties': {
-          'IV': iv,
-        },
-        'appProperties': {
-          'IV': iv,
-        }
-      };
-      drive.files.create(
-          {resource: fileMetadata, media: media, fields: 'id'},
-          function(err, file) {
-            if (err) {
-              // Handle error
-              console.error(err);
-            } else {
-              console.log(
-                  'Uploaded file \"' + fileName + '\", File Id: ', file.id);
-            }
-          });
+      drive.files.update({fileId: fileId, resource: fileMetadata, media: media, fields: 'id'})
     }
+    else
+    {
+      fileMetadata = {'name': fileName, 'parents': ['appDataFolder'], 'IV': iv};
+    drive.files.create(
+        {resource: fileMetadata, media: media, fields: 'id'},
+        function(err, file) {
+          if (err) {
+            // Handle error
+            console.error(err);
+          } else {
+            console.log(
+                'Uploaded file \"' + fileName + '\", File Id: ', file.id);
+          }
+        });
+      }
     // Still need to attack the IV to the file
     callback()
   }
@@ -189,20 +180,20 @@ class Config {
     })
   }
 
-  shareFile(filename, user) {
-    // download filename's key file of username user
+  shareFile(filename, user){
+    //download filename's key file of username user
 
-    // download key sharing file
+    //download key sharing file 
 
-    // decrypt the symmetric key with your private key pair
+    //decrypt the symmetric key with your private key pair
 
-    // fetch user's public key from the public key folder
+    //fetch user's public key from the public key folder
 
-    // encrypt symmetric key with user's public key
+    //encrypt symmetric key with user's public key
 
-    // append to the filename's key file
+    //append to the filename's key file
 
-    // overwrite key file with new key file
+    //overwrite key file with new key file
   }
   encryptFile(filename) {
     let self = this;  // so we can get `this` inside anonymous functions
@@ -217,7 +208,6 @@ class Config {
         let iv = crypto.randomBytes(16)
         let cipher = crypto.createCipheriv('aes-256-gcm', key, iv)
         let ciphertext = cipher.update(rawfilecontents, 'binary', 'binary')
-
 
 
         self.uploadfile(filename, ciphertext, iv, function() {
@@ -245,6 +235,7 @@ class Config {
       })
     })
   }
+
   handleDocuments() {
     let self = this;  // so we can get `this` inside anonymous functions
     fs.mkdir('./Documents', function() {
@@ -256,6 +247,7 @@ class Config {
           // open the file:
           self.encryptFile(file)
         }
+        self.reload();
       })
       // setup watch on filedirectory
       fs.watch('./Documents', {recursive: true}, function(eventname, filename) {
@@ -270,6 +262,11 @@ class Config {
         }
       })
     })
+  }
+  //reloads the gui of the folder page.
+  reload()
+  {
+    event.sender.send('actionReply', folder);
   }
 }
 
