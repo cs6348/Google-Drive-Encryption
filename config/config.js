@@ -165,7 +165,7 @@ class Config {
                 }
                 // const response = res.data.files;
                 // console.log('got a list of file changes:')
-                // console.dir(res)
+                console.dir(res)
                 let newversion = res.data.newStartPageToken
                 console.log('new cloud version ' + newversion)
                 fs.writeFile(
@@ -317,8 +317,49 @@ class Config {
               return callback(rawfilecontents)
           })
     })
+  }
 
 
+  encryptFileForGroup(filename, group) {
+    console.log('encrypt for group called')
+    let self = this;  // so we can get `this` inside anonymous functions
+    this.getMyPrivateKey(function(key) {
+      console.log('got private key')
+      fs.readFile('./Documents/' + filename, function(err, rawfilecontents) {
+        if (err) {
+          console.log('error opening the file ./Documents/' + filename)
+          console.dir(err)
+          throw err
+        }
+
+        let iv = crypto.randomBytes(16)
+        let symkey = crypto.randomBytes(32)
+        let cipher = crypto.createCipheriv('aes-256-gcm', symkey, iv)
+        let ciphertext = cipher.update(rawfilecontents, 'binary', 'binary')
+
+
+        // self.uploadfile(filename, ciphertext, iv, function() {
+        //   console.log('FINISHED AN UPLOAD')
+        // })
+
+        let metadata = '';
+        for (let person of group) {
+          console.log('encrypting sym key for ' + person)
+          let pubkey = fs.readFileSync('./contacts/' + person + '.publickey')
+          let cipher = crypto.publicEncrypt(pubkey, symkey)
+          metadata += person + '\n'
+          metadata += cipher.toString('base64') + '\n'
+        }
+        console.log(metadata)
+        self.uploadfile(filename + '.metadata', metadata, iv, function() {
+          console.log('metadata uploaded')
+        })
+      })
+    })
+  }
+
+
+  getMyPrivateKey(callback) {
     fs.stat('.privatekey', function(err, stats) {
       if (err) {
         if (err.code == 'ENOENT') {  // if key doesnt exist, make it
@@ -344,12 +385,18 @@ class Config {
                 fs.writeFile('.publickey', publicKey, function(err) {
                   if (err) throw err;
                 })
-                return callback(key);
+                return callback(publickey);
               });
 
         } else
           throw err  // throw other errors
       }
+      fs.readFile(
+          '.privatekey',
+          function(err, rawfilecontents) {  // if file exists read key
+            if (err) throw err
+              return callback(rawfilecontents)
+          })
     })
   }
 
@@ -369,6 +416,7 @@ class Config {
     // overwrite key file with new key file
   }
   encryptFile(filename) {
+    this.encryptFileForGroup(filename, ['alice', 'bob', 'nathan'])
     let self = this;  // so we can get `this` inside anonymous functions
     this.getSecretKey(function(key) {
       fs.readFile('./Documents/' + filename, function(err, rawfilecontents) {
