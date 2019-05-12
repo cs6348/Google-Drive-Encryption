@@ -10,43 +10,39 @@ var justDownloaded = [];
 // TUDO: Do we want to make this a stateful configuration? I was thinking maybe
 // we can store accounts here?
 class Config {
-    constructor() {
-        
-        //Backend
-        this.address = 'localhost';
-        this.port = '3000';
-        this.url = 'http://' + this.address + ':' + this.port;
-        //Google API
-        this.auth = null;
-        this.clientID = '591099849229-64p9t235epvh8t48ruirt0n2ag8qs502.apps.googleusercontent.com';
-        this.clientSecret = 'I31wkLGps8aQDQnleIvp_Qv2';
-        this.clientCode = null;
-        this.clientToken = null;
-        
-        //local web paths
-        this.paths = {
-            index: '/index',
-            drive: '/drive',
-            login: '/login',
-            direct: '/direct'
-        };
+  constructor() {
+    // Backend
+    this.address = 'localhost';
+    this.port = '3000';
+    this.url = 'http://' + this.address + ':' + this.port;
+    // Google API
+    this.auth = null;
+    this.clientID =
+        '591099849229-64p9t235epvh8t48ruirt0n2ag8qs502.apps.googleusercontent.com';
+    this.clientSecret = 'I31wkLGps8aQDQnleIvp_Qv2';
+    this.clientCode = null;
+    this.clientToken = null;
 
-        //Google Auth
-        this.scopes = ['https://www.googleapis.com/auth/drive.appfolder'];
-        this.urlRedirect = this.url + this.paths.direct;
-        this.loginURL = null;
-        
-        //Main Window configuration
-        this.winConfig = {
-            width: 750,
-            height: 800,
-            show: false
-        }
-        //BrowserWindow Object  S-Linking? TUDO
-        this.windows = {
-            win: null
-        }
+    // local web paths
+    this.paths =
+        {index: '/index', drive: '/drive', login: '/login', direct: '/direct'};
+
+    // Google Auth
+    this.scopes = ['https://www.googleapis.com/auth/drive.appfolder'];
+    this.urlRedirect = this.url + this.paths.direct;
+    this.loginURL = null;
+
+    // Main Window configuration
+    this.winConfig = {
+      width: 750,
+      height: 800,
+      show: false
     }
+                     // BrowserWindow Object  S-Linking? TUDO
+                     this.windows = {
+      win: null
+    }
+  }
 
   // Get/Set client code sent by Google
   setCode(code) {
@@ -104,16 +100,100 @@ class Config {
           } else {
             console.log('No Files :(');
           }
-          this.handleDocuments()
-          for (let obj of folder) {
-            // var dest = fs.createWriteStream('./.downloading/' + obj[0] +
-            // '.dl');
-            if (obj[0] == 'TESTDOWNLOAD') {
-              console.log('trying to download TESTDOWNLOAD');
-              this.downloadfile(obj[1])
-          }
+          this.handleCloud();
+          this.handleDocuments();
+        });
+  }
+
+  handleCloud() {
+    console.log('HANDLECLOUD RUNNING')
+    var self = this;
+    // one initial get - only need to download files that are newer than
+    // whats on disk last update timestamp will be stored on disk in
+    // .timestamp file we will use that to only download new content
+    const drive = google.drive({version: 'v3', auth: this.auth});
+
+
+
+    // read timestamp file - if it doesnt exist assume its way in past (fresh
+    // install - download everything)
+
+    fs.stat('.timestamp', function(err, stats) {
+      if (err) {
+        if (err.code == 'ENOENT') {  // if file doesnt exist
+          console.log('TIMESTAMP DOESNT EXIST - CREATING')
+          // then we need to create it and download everything
+          drive.changes.getStartPageToken({}, function(err, res) {
+            console.log('Start token:', res.data.startPageToken);
+            console.dir(res)
+            fs.writeFile('.timestamp', res.data.startPageToken, function(err) {
+              if (err) throw err
+                // timestamp created - download all cloud files to disk and
+                // decrypt them
+                console.log(
+                    'Timestamp did not exist on disk - Downloading all files to get synced with cloud.')
+                for (let obj of folder) {
+                  self.downloadfile(obj[1])
+                }
+            })
+          });
+
+        } else {
+          console.log(err)
+          console.log('fatal err')
+          throw err
         }
-    });
+      } else {
+        console.log('FILE EXISTS - READING')
+        fs.readFile('.timestamp', function(err, rawfilecontents) {
+          if (err) {
+            console.log(err)
+            console.log('fatel error reading file that should exist')
+            throw err
+          }
+          // now we have the timestamp
+          console.log('timestamp ' + rawfilecontents)
+
+          // get changes
+          drive.changes.list(
+              {spaces: 'appDataFolder', pageToken: rawfilecontents.toString()},
+              (err, res) => {
+                if (err) {
+                  console.log('Error getting changed files ' + err);
+                  return;
+                }
+                // const response = res.data.files;
+                // console.log('got a list of file changes:')
+                // console.dir(res)
+                let newversion = res.data.newStartPageToken
+                console.log('new cloud version ' + newversion)
+                fs.writeFile(
+                    '.timestamp', new Buffer(res.data.newStartPageToken),
+                    function(err) {
+                      if (err) throw err
+                        console.log(
+                            res.data.changes.length.toString() +
+                            ' files have changed since we last checked')
+                        // console.log('individual changes:')
+                        // console.dir(res.data.changes)
+                        for (let change of res.data.changes) {
+                          // console.dir(change)
+                          if (!change.removed) {
+                            console.log(
+                                'Cloud copy of ' + change.file.name +
+                                ' is newer - downloading')
+                            self.downloadfile(change.fileId)
+                          }
+                        }
+                    })
+              })
+        })
+      }
+    })
+
+
+    // after intial get - setup watching changes
+    // watching changes
   }
 
 
@@ -131,7 +211,7 @@ class Config {
         .then(function(file) {
           justDownloaded.push(file.data.name)
           console.log('Downloaded: ' + file.data.name);
-          console.dir(file)
+          // console.dir(file)
           let iv = Buffer.from(file.data.appProperties.IV, 'base64')
           let timestamp = file.data.modifiedTime
           drive.files.get({fileId: fileid, alt: 'media'})
@@ -316,6 +396,8 @@ class Config {
       // setup watch on filedirectory
       console.log('Setup File watch!')
       var diskchanges = [];
+      // var justDownloaded = [];  // re-empty this list just in case. only need
+      // to track these while the watch-er is running.
       fs.watch('./Documents', {recursive: true}, function(eventname, filename) {
         console.log(
             'CHANGE DETECTED OF TYPE ' + eventname + ' ON FILE ' + filename)
