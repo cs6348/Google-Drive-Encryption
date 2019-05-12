@@ -1,4 +1,6 @@
 node_modules
 Documents/*
 .uploading/*
+.downloading/*
 .secretkey
+.timestamp
