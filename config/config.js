@@ -4,6 +4,8 @@ const fs = require('fs');
 const crypto = require('crypto');
 var folder;
 var event;
+var justUploaded = [];
+var justDownloaded = [];
 
 // TUDO: Do we want to make this a stateful configuration? I was thinking maybe
 // we can store accounts here?
@@ -112,11 +114,12 @@ class Config {
     drive.files
         .get({
           fileId: fileid,
-          fields: '*'
-          // 'name, appProperties, createdTime, modifiedTime, modifiedByMeTime'
+          fields:
+              'name, appProperties, createdTime, modifiedTime, modifiedByMeTime'
 
         })
         .then(function(file) {
+          justDownloaded.push(file.data.name)
           console.log('Downloaded: ' + file.data.name);
           console.dir(file)
           let iv = Buffer.from(file.data.appProperties.IV, 'base64')
@@ -153,6 +156,7 @@ class Config {
   }
 
   uploadfile(fileName, ciphertext, iv, callback) {
+    justUploaded.push(fileName)
     const drive = google.drive({version: 'v3', auth: this.auth});
     var fileId = '';
     var fileMetadata;
@@ -287,15 +291,55 @@ class Config {
         self.reload();
       })
       // setup watch on filedirectory
+      console.log('Setup File watch!')
+      var diskchanges = [];
       fs.watch('./Documents', {recursive: true}, function(eventname, filename) {
         console.log(
-            'CHANGE DETECTED OF TYPE ' + eventname + ' on file ' + filename)
+            'CHANGE DETECTED OF TYPE ' + eventname + ' ON FILE ' + filename)
         // change means file contents changed
         // rename means creation/deletion/rename
         if (eventname == 'change') {
-          self.encryptFile(
-              filename,
-          )
+          // These events always seem to be triggered twice. so we log them the
+          // first time so that we can ignore them the second
+          let wasjustchanged = false;
+          let changedindex = -1;
+          for (let i in diskchanges) {
+            if (!wasjustchanged) {
+              if (diskchanges[i] == filename) {
+                wasjustchanged = true
+                changedindex = i
+              }
+            }
+          }
+
+          if (wasjustchanged) {
+            // ignoring the duplicate change
+            console.log('duplicate change - ignored')
+            diskchanges.splice(changedindex, 1)
+          } else {
+            diskchanges.push(filename)
+            let wasjustdownloaded = false;
+            let downloadindex = -1;
+            for (let i in justDownloaded) {
+              if (!wasjustdownloaded) {
+                if (justDownloaded[i] == filename) {
+                  wasjustdownloaded = true
+                  downloadindex = i
+                }
+              }
+            }
+            if (wasjustdownloaded) {
+              // remove from the list
+              console.log(
+                  'change detected but it was a file we just downloaded so lets ignore it')
+              justDownloaded.splice(downloadindex, 1)
+            } else {
+              console.log('change detected and it seems to be legitimate')
+              self.encryptFile(
+                  filename,
+              )
+            }
+          }
         }
       })
     })
