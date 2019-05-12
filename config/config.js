@@ -111,9 +111,9 @@ class Config {
             if (obj[0] == 'TESTDOWNLOAD') {
               console.log('trying to download TESTDOWNLOAD');
               this.downloadfile(obj[1])
-            }
           }
-        });
+        }
+    });
   }
 
 
@@ -165,13 +165,17 @@ class Config {
         })
   }
 
-  deleteFile(fileID){
+  deleteFile(fileID, callback){
     const drive = google.drive({version: 'v3', auth: this.auth});
     drive.files.delete({fileId: fileID},
     (err) => {
-      if (err)
+      if (err){
         console.log('Error DELETING drive listing: ' + err);
+        return;
+      }
+      callback();
     });
+    
   }
 
   uploadfile(fileName, ciphertext, iv, callback) {

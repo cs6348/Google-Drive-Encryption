@@ -62,7 +62,7 @@ ipc.on('invokeAction', function (event, data) {
 
 ipc.on('driveAction', (event, data) => {
     if(data[0].toUpperCase == 'DELETE'.toUpperCase)
-        config.deleteFile(data[1]);
+        config.deleteFile(data[1], () => { config.windows.win.reload();});
     else
         console.log('Unidentified Action')
 });
