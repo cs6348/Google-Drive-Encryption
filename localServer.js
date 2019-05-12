@@ -60,6 +60,13 @@ ipc.on('invokeAction', function (event, data) {
     config.listFiles(sendData);
 });
 
+ipc.on('driveAction', (event, data) => {
+    if(data[0].toUpperCase == 'DELETE'.toUpperCase)
+        config.deleteFile(data[1]);
+    else
+        console.log('Unidentified Action')
+});
+
 module.exports.launchServer = launchServer;
 
 

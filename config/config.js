@@ -27,13 +27,13 @@ class Config {
         };
 
         //Google Auth
-        this.scopes = ['https://www.googleapis.com/auth/drive.readonly'];
+        this.scopes = ['https://www.googleapis.com/auth/drive'];
         this.urlRedirect = this.url + this.paths.direct;
         this.loginURL = null;
         
         //Main Window configuration
         this.winConfig = {
-            width: 700,
+            width: 750,
             height: 800,
             show: false
         }
@@ -98,6 +98,15 @@ class Config {
                     console.log('No Files :(');
                 }
         });
+  }
+
+  deleteFile(fileID){
+    const drive = google.drive({version: 'v3', auth: this.auth});
+    drive.files.delete({fileId: fileID},
+    (err) => {
+      if (err)
+        console.log('Error DELETING drive listing: ' + err);
+    });
   }
 
   uploadfile(fileName, ciphertext, iv, callback) {

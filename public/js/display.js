@@ -32,17 +32,33 @@ function printFiles(folder)
         <th scope="row"> ${i} </th>
         <td> <img src=${folder[i][3]}> </td>
         <td> ${folder[i][0]} </td>
+        <td class="align-bottom col-actions">
+            <button onClick="getInfo('${folder[i][1]}')">
+                <i class="fas fa-info-circle"></i>
+            </button>
+            <button class="danger-button" onClick="remoteAction('DELETE', '${folder[i][1]}')"> 
+                <i class="fas fa-trash"></i>
+            </button>
+        </td>
         `;
 
         document.getElementById('fileCollection').appendChild(file[i]);
 
-        file[i].addEventListener ("click", function() {
-            alert("Download ID: "+folder[this.id][1]);
-        });
+        // file[i].addEventListener ("click", function() {
+        //     alert("Download ID: "+folder[this.id][1]);
+        // });
     }
 }
-    ipc.once('actionReply', function(event, response){
+
+function remoteAction(action, id){ ipc.send('driveAction', [action, id]); }
+
+function getInfo(info){
+    alert(`Download ID: ${info}`);
+}
+
+ipc.once('actionReply', function(event, response){
         printFiles(response);
-    })
-    ipc.send('invokeAction', 'someData');
+});
+
+ipc.send('invokeAction', 'someData');
 
