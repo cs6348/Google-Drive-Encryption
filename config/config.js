@@ -106,6 +106,7 @@ class Config {
 
 
   downloadfile(fileid) {
+    var self = this;
     const drive = google.drive({version: 'v3', auth: this.auth});
 
     drive.files
@@ -118,12 +119,29 @@ class Config {
         .then(function(file) {
           console.log('Downloaded: ' + file.data.name);
           console.dir(file)
-          // get the IV here somehow, and then download again but get the data
-          // instead of properties.
+          let iv = Buffer.from(file.data.appProperties.IV, 'base64')
+          let timestamp = file.data.modifiedTime
           drive.files.get({fileId: fileid, alt: 'media'})
               .then(function(filewithdata) {
-                console.dir('FILE CONTENTS:')
+                console.log('ENCRYPTED FILE CONTENTS:')
                 console.dir(filewithdata.data)
+                self.getSecretKey(function(key) {
+                  let decipher = crypto.createDecipheriv('aes-256-gcm', key, iv)
+                  let cleartext =
+                      decipher.update(filewithdata.data, 'binary', 'binary')
+                  console.log('CLEARTEXT: ' + cleartext)
+                  fs.writeFile(
+                      './Documents/' + file.data.name, cleartext,
+                      {encoding: 'binary'}, function(err) {
+                        if (err) {
+                          console.log('error writing to file ')
+                          console.log('./Documents/' + file.data.name)
+                          throw err
+                        } else {
+                          console.log('WRITTEN TO FILE')
+                        }
+                      })
+                })
               })
               .catch(function(err) {
                 console.log('Error during second download', err);
@@ -148,12 +166,19 @@ class Config {
       }
     }
     if (fileId != '') {
-      fileMetadata = {'name': fileName, 'IV': iv};
+      fileMetadata = {
+        'name': fileName,
+        'appProperties': {'IV': Buffer.from(iv).toString('base64')}
+      };
       console.log(fileId);
       drive.files.update(
           {fileId: fileId, resource: fileMetadata, media: media, fields: 'id'})
     } else {
-      fileMetadata = {'name': fileName, 'parents': ['appDataFolder'], 'IV': iv};
+      fileMetadata = {
+        'name': fileName,
+        'parents': ['appDataFolder'],
+        'appProperties': {'IV': Buffer.from(iv).toString('base64')}
+      };
       drive.files.create(
           {resource: fileMetadata, media: media, fields: 'id'},
           function(err, file) {
@@ -278,6 +303,7 @@ class Config {
   // reloads the gui of the folder page.
   reload() {
     event.sender.send('actionReply', folder);
+    console.log('reloaded')
   }
 }
 
