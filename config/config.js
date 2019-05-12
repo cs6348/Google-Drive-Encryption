@@ -83,7 +83,7 @@ class Config {
         }, 
         (err, res) => {
             if (err) {
-                console.log('Error getting drive listing' + err);
+                console.log('Error getting drive listing: ' + err);
                 return;
             }
             const response = res.data.files;
