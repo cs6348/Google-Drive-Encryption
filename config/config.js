@@ -1,7 +1,7 @@
 const {google} = require('googleapis');
 const fs = require('fs');
 const crypto = require('crypto');
-
+var folder;
 // TUDO: Do we want to make this a stateful configuration? I was thinking maybe
 // we can store accounts here?
 class Config {
@@ -57,7 +57,6 @@ class Config {
       else {
         this.auth.credentials = token;
         this.clientToken = token;
-        // this.listFiles();
         callback();
       }
     });
@@ -66,7 +65,7 @@ class Config {
   listFiles(callback) {
     // Test Output
     const drive = google.drive({version: 'v3', auth: this.auth});
-    var folder = [];
+    folder = [];
     drive.files.list(
         {
           spaces: 'appDataFolder',
@@ -95,19 +94,36 @@ class Config {
 
   uploadfile(fileName, ciphertext, iv, callback) {
     const drive = google.drive({version: 'v3', auth: this.auth});
-    var fileMetadata = {'name': fileName, 'parents': ['appDataFolder']};
+    var fileId = '';
+    var fileMetadata;
     var media = {mimeType: 'application/octet-stream', body: ciphertext};
-    drive.files.create(
-        {resource: fileMetadata, media: media, fields: 'id'},
-        function(err, file) {
-          if (err) {
-            // Handle error
-            console.error(err);
-          } else {
-            console.log(
-                'Uploaded file \"' + fileName + '\", File Id: ', file.id);
-          }
-        });
+    var i;
+    for (i = 0; i < folder.length; i++) {
+      if (fileName == folder[i][0]) {
+        // console.log("Match: "+folder[i][0]);
+        fileId = folder[i][1];
+        i = folder.length;
+      }
+    }
+    if (fileId != '') {
+      fileMetadata = {'name': fileName, 'IV': iv};
+      console.log(fileId);
+      drive.files.update(
+          {fileId: fileId, resource: fileMetadata, media: media, fields: 'id'})
+    } else {
+      fileMetadata = {'name': fileName, 'parents': ['appDataFolder'], 'IV': iv};
+      drive.files.create(
+          {resource: fileMetadata, media: media, fields: 'id'},
+          function(err, file) {
+            if (err) {
+              // Handle error
+              console.error(err);
+            } else {
+              console.log(
+                  'Uploaded file \"' + fileName + '\", File Id: ', file.id);
+            }
+          });
+    }
     // Still need to attack the IV to the file
     callback()
   }
@@ -134,7 +150,21 @@ class Config {
     })
   }
 
+  shareFile(filename, user) {
+    // download filename's key file of username user
 
+    // download key sharing file
+
+    // decrypt the symmetric key with your private key pair
+
+    // fetch user's public key from the public key folder
+
+    // encrypt symmetric key with user's public key
+
+    // append to the filename's key file
+
+    // overwrite key file with new key file
+  }
   encryptFile(filename) {
     let self = this;  // so we can get `this` inside anonymous functions
     this.getSecretKey(function(key) {
@@ -146,10 +176,11 @@ class Config {
         }
 
         let iv = crypto.randomBytes(16)
-        let cipher = crqypto.createCipheriv('aes-256-gcm', key, iv)
+        let cipher = crypto.createCipheriv('aes-256-gcm', key, iv)
         let ciphertext = cipher.update(rawfilecontents, 'binary', 'binary')
 
         console.log('cipher is of type' + typeof (ciphertext))
+
 
         self.uploadfile(filename, ciphertext, iv, function() {
           console.log('FINISHED AN UPLOAD')
