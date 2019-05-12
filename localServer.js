@@ -12,7 +12,7 @@ const generateOAuth = (req, res, next) => {
 const getCode = (req, res, next) => {
     let code = null;
     const index = req.originalUrl.indexOf("=");
-    if(req.originalUrl.indexOf("?code=") != -1) {
+    if (req.originalUrl.indexOf("?code=") != -1) {
         code = req.originalUrl.slice(index + 1, req.originalUrl.length);
         config.setCode(code);
     } else {
@@ -37,7 +37,7 @@ function launchServer() {
         //On Successful token generation, direct to drive page
         res.redirect(config.paths.drive);
         next();
-    }); 
+    });
     //app.get('/drive', getCode);
     //Set path aliases for other pages
     //app.use('/login', express.static(path.join(__dirname, 'public', 'pages/login.html')));
@@ -51,9 +51,8 @@ function launchServer() {
 
 var ipc = require('electron').ipcMain;
 
-ipc.on('invokeAction', function(event, data){
-    function sendData(data)
-    {
+ipc.on('invokeAction', function (event, data) {
+    function sendData(data) {
         console.log(data[0][0]);
         console.log('Run Good');
         event.sender.send('actionReply', data);
@@ -62,3 +61,6 @@ ipc.on('invokeAction', function(event, data){
 });
 
 module.exports.launchServer = launchServer;
+
+
+

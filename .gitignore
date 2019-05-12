@@ -1,2 +1,4 @@
 node_modules
-Documents
+Documents/*
+.uploading/*
+.secretkey
