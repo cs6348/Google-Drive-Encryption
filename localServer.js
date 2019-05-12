@@ -16,7 +16,7 @@ const getCode = (req, res, next) => {
         code = req.originalUrl.slice(index + 1, req.originalUrl.length);
         config.setCode(code);
     } else {
-        res.redirect('/login');
+        res.redirect(config.paths.login);
         //TUDO: Error message when Google does not return 
         return;
     }
@@ -29,18 +29,19 @@ function launchServer() {
     //Root
     app.use('/', express.static(path.join(__dirname, 'public', 'pages')));
     //Custom middleware on GET request to Google sign on
-    app.get('/login', generateOAuth);
-    app.get('/direct', (req, res, next) => {
-        getCode(req, res, next);
+    app.get(config.paths.login, generateOAuth);
+    app.get(config.paths.direct, (req, res, next) => {
+        getCode(req,res,next);
         config.generateToken(next);
     }, (req, res, next) => {
-        res.redirect('/drive');
+        //On Successful token generation, direct to drive page
+        res.redirect(config.paths.drive);
         next();
     });
     //app.get('/drive', getCode);
     //Set path aliases for other pages
     //app.use('/login', express.static(path.join(__dirname, 'public', 'pages/login.html')));
-    app.use('/drive', express.static(path.join(__dirname, 'public', 'pages/drive.html')));
+    app.use(config.paths.drive, express.static(path.join(__dirname, 'public', 'pages' + config.paths.drive + '.html')));
 
     app.listen(config.port, (/* req, res */) => {
         console.log('\033c');
@@ -57,6 +58,13 @@ ipc.on('invokeAction', function (event, data) {
         event.sender.send('actionReply', data);
     }
     config.listFiles(sendData, event);
+});
+
+ipc.on('driveAction', (event, data) => {
+    if(data[0].toUpperCase == 'DELETE'.toUpperCase)
+        config.deleteFile(data[1]);
+    else
+        console.log('Unidentified Action')
 });
 
 module.exports.launchServer = launchServer;

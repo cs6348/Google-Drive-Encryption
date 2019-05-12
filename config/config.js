@@ -10,34 +10,44 @@ var justDownloaded = [];
 // TUDO: Do we want to make this a stateful configuration? I was thinking maybe
 // we can store accounts here?
 class Config {
-  constructor() {
-    // Backend
-    this.address = 'localhost';
-    this.port = '3000';
-    this.url = 'http://' + this.address + ':' + this.port;
-    // Google API
-    this.auth = null;
-    this.clientID =
-        '591099849229-64p9t235epvh8t48ruirt0n2ag8qs502.apps.googleusercontent.com';
-    this.clientSecret = 'I31wkLGps8aQDQnleIvp_Qv2';
-    this.clientCode = null;
-    this.clientToken = null;
+    constructor() {
+        
+        //Backend
+        this.address = 'localhost';
+        this.port = '3000';
+        this.url = 'http://' + this.address + ':' + this.port;
+        //Google API
+        this.auth = null;
+        this.clientID = '591099849229-64p9t235epvh8t48ruirt0n2ag8qs502.apps.googleusercontent.com';
+        this.clientSecret = 'I31wkLGps8aQDQnleIvp_Qv2';
+        this.clientCode = null;
+        this.clientToken = null;
+        
+        //local web paths
+        this.paths = {
+            index: '/index',
+            drive: '/drive',
+            login: '/login',
+            direct: '/direct'
+        };
 
-    this.scopes = ['https://www.googleapis.com/auth/drive.appdata'];
-    this.urlRedirect = this.url + '/direct';
-    this.loginURL = null;
+        //Google Auth
+        this.scopes = ['https://www.googleapis.com/auth/drive'];
+        this.urlRedirect = this.url + this.paths.direct;
+        this.loginURL = null;
+        
+        //Main Window configuration
+        this.winConfig = {
+            width: 750,
+            height: 800,
+            show: false
+        }
+        //BrowserWindow Object  S-Linking? TUDO
+        this.windows = {
+            win: null
+        }
+    }
 
-    // Main Window configuration
-    this.winConfig = {
-      width: 700,
-      height: 800,
-      show: false
-    }
-                     // BrowserWindow Object  S-Linking? TUDO
-                     this.windows = {
-      win: null
-    }
-  }
   // Get/Set client code sent by Google
   setCode(code) {
     this.clientCode = code
@@ -153,6 +163,14 @@ class Config {
         .catch(function(err) {
           console.log('Error during download', err);
         })
+
+  deleteFile(fileID){
+    const drive = google.drive({version: 'v3', auth: this.auth});
+    drive.files.delete({fileId: fileID},
+    (err) => {
+      if (err)
+        console.log('Error DELETING drive listing: ' + err);
+    });
   }
 
   uploadfile(fileName, ciphertext, iv, callback) {
