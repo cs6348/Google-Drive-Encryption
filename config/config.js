@@ -290,7 +290,7 @@ class Config {
                                     self.displayName) {
                                   console.log(
                                       'found the sym key that was encrypted for us:')
-                                  // console.dir(metadatalines[lineindex])
+                                  // console.dir(metadat1nes[lineindex])
                                   console.dir(
                                       metadatalines[parseInt(lineindex) + 1])
                                   symkeyencrypted = new Buffer(
@@ -464,6 +464,18 @@ class Config {
     })
   }
 
+  getEmailList() {
+    var files = fs.readdirSync('./contacts', {withFileTypes: false});
+    var result = [];
+    // get the encryption key and encrypt files
+    for (var file of files) {
+      if (file.endsWith('.email')) {
+        result.push(file.substring(0, file.length - 6))
+      }
+    }
+    this.contactListNames = result;
+    return result
+  }
 
   encryptFileForGroup(filename, group) {
     console.log('encrypt for group called ' + group)
