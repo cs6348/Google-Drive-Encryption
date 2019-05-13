@@ -252,7 +252,7 @@ class Config {
                         name: metadataname,
 
                         parents: rootFolderID,
-                        q: rootFolderID + ' in parents',
+                        q: `'${rootFolderID}' in parents`,
                         // parents: file.data.parents,
                         // spaces: 'appDataFolder',
                         pageSize: 50,
