@@ -41,9 +41,12 @@ function printFiles(folder) {
             <button onClick="remoteAction('share', '${folder[i][0]}')">
               <i class="fas fa-share"></i>
             </button>
-            <button onClick="remoteAction('download', '${folder[i][1]}')"> 
+            ${
+              (!folder[i][0].endsWith('.metadata')) ? `
+              <button onClick="remoteAction('download', '${folder[i][1]}')"> 
                 <i class="fas fa-file-download"></i>
-            </button>
+              </button>` : '<button disabled><i style = "opacity: 0.6;" class="fas fa-file-download"></i></button>'
+            }
             <button class="danger-button" onClick="remoteAction('delete', '${folder[i][1]}')"> 
                 <i class="fas fa-trash"></i>
             </button>
