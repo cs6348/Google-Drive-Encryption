@@ -354,9 +354,10 @@ class Config {
       permissions.push({
         type: 'user',
         role: 'writer',
-        emailAddress: email,
+        emailAddress: email.toString(),
       })
     }
+    console.log(permissions)
     justUploaded.push(fileName)
     const drive = google.drive({version: 'v3', auth: this.auth});
     var fileId = '';
@@ -389,17 +390,20 @@ class Config {
                   file.data.id);
               for (let perm of permissions) {
                 drive.permissions.create(
-                    {resource: perm, fileId: file.data.id, fields: 'id'}),
+                    {resource: perm, fileId: file.data.id, fields: 'id'},
                     function(err, res) {
                       if (err) {
                         // Handle error...
+                        console.log('perm upload returned an error')
                         console.error(err);
                         // permissionCallback(err);
                       } else {
-                        console.log('Permission ID: ', res.id)
+                        console.log('permission create success ')
+                        console.dir(res)
+                        // console.log('Permission ID: ', res.id)
                         // permissionCallback();
                       }
-                    }
+                    })
               }
             }
           })
@@ -423,7 +427,7 @@ class Config {
                   file.data.id);
               for (let perm of permissions) {
                 drive.permissions.create(
-                    {resource: perm, fileId: file.data.id, fields: 'id'}),
+                    {resource: perm, fileId: file.data.id, fields: 'id'},
                     function(err, res) {
                       if (err) {
                         // Handle error...
@@ -433,7 +437,7 @@ class Config {
                         console.log('Permission ID: ', res.id)
                         // permissionCallback();
                       }
-                    }
+                    })
               }
             }
           });
@@ -489,6 +493,7 @@ class Config {
         console.log('getting email for ' + firstname)
         let email = fs.readFileSync('./contacts/' + firstname + '.email')
         sharewith.push(email);
+        console.log('email gotten for ' + firstname + ' -> ' + email)
       }
     }
     encryptfor.push(this.displayName)
@@ -598,7 +603,8 @@ class Config {
     // overwrite key file with new key file
   }
   encryptFile(filename) {
-    this.encryptFileForGroup(filename, [])
+    console.log(this.getEmailList());
+    this.encryptFileForGroup(filename, []);
     // let self = this;  // so we can get `this` inside anonymous functions
     // this.getSecretKey(function(key) {
     //   fs.readFile('./Documents/' + filename, function(err, rawfilecontents)

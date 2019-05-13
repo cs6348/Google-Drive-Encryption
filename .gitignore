@@ -6,3 +6,4 @@ Documents/*
 .timestamp
 .publickey
 .privatekey
+contacts/*.email
