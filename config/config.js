@@ -100,8 +100,8 @@ class Config {
           } else {
             console.log('No Files :(');
           }
-          this.handleCloud();
-          this.handleDocuments();
+          // this.handleCloud();
+          // this.handleDocuments();
         });
   }
 
@@ -449,6 +449,13 @@ class Config {
       })
     })
   }
+
+  setListeners(eventVal){
+    event = eventVal;
+    this.handleCloud();
+    this.handleDocuments();
+  }
+
   // reloads the gui of the folder page.
   reload() {
     event.sender.send('actionReply', folder);

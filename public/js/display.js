@@ -36,6 +36,9 @@ function printFiles(folder)
             <button onClick="getInfo('${folder[i][1]}')">
                 <i class="fas fa-info-circle"></i>
             </button>
+            <button onClick="remoteAction('DOWNLOAD', '${folder[i][1]}')"> 
+                <i class="fas fa-file-download"></i>
+            </button>
             <button class="danger-button" onClick="remoteAction('DELETE', '${folder[i][1]}')"> 
                 <i class="fas fa-trash"></i>
             </button>
@@ -60,5 +63,6 @@ ipc.once('actionReply', function(event, response){
         printFiles(response);
 });
 
+ipc.send('driveListeners');
 ipc.send('invokeAction', 'someData');
 

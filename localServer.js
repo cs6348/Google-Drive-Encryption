@@ -53,8 +53,6 @@ var ipc = require('electron').ipcMain;
 
 ipc.on('invokeAction', function (event, data) {
     function sendData(data) {
-        console.log(data[0][0]);
-        console.log('Run Good');
         event.sender.send('actionReply', data);
     }
     config.listFiles(sendData, event);
@@ -62,10 +60,16 @@ ipc.on('invokeAction', function (event, data) {
 
 ipc.on('driveAction', (event, data) => {
     if(data[0].toUpperCase == 'DELETE'.toUpperCase)
-        config.deleteFile(data[1], () => { config.windows.win.reload();});
+        config.deleteFile(data[1], () => { config.windows.win.reload() });
+    if(data[0].toUpperCase == 'DOWNLOAD'.toUpperCase)
+        config.downloadfile(data[1], () => { config.windows.win.reload() });
     else
-        console.log('Unidentified Action')
+        console.log('Unidentified Action');
 });
+
+ipc.once('driveListeners', (event) => {
+    config.setListeners(event);
+})
 
 module.exports.launchServer = launchServer;
 
