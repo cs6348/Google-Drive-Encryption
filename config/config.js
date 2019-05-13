@@ -6,6 +6,7 @@ var folder;
 var event;
 var justUploaded = [];
 var justDownloaded = [];
+var rootFolderID;
 
 // TUDO: Do we want to make this a stateful configuration? I was thinking maybe
 // we can store accounts here?
@@ -29,7 +30,7 @@ class Config {
         {index: '/index', drive: '/drive', login: '/login', direct: '/direct'};
 
     // Google Auth
-    this.scopes = ['https://www.googleapis.com/auth/drive.appfolder'];
+    this.scopes = ['https://www.googleapis.com/auth/drive'];
     this.urlRedirect = this.url + this.paths.direct;
     this.loginURL = null;
 
@@ -81,23 +82,11 @@ class Config {
     event = eventVal;
     const drive = google.drive({version: 'v3', auth: this.auth});
     var self = this;
-    drive.about.get({fields: 'user/displayName'})
-        .then(function(res) {
-          // console.log('ABOUT GET')
-          // console.dir(res.data)
-          console.log(res.data.user.displayName)
-          var name = res.data.user.displayName;
-          var firstname = name.split(' ')[0]
-          console.log(name)
-          self.displayName = firstname;
-        })
-        .catch(function(err) {
-          console.error(err)
-        })
-    folder = [];
     drive.files.list(
         {
-          spaces: 'appDataFolder',
+          // spaces: 'appDataFolder',
+          // parents: rootFolderID,
+          q: 'parents = \'AppSecFolder\'',
           pageSize: 50,
           fields: 'nextPageToken, files(id, name)'
         },
@@ -106,6 +95,7 @@ class Config {
             console.log('Error getting drive listing' + err);
             return;
           }
+          console.log('got the drive listing for the menu')
           const response = res.data.files;
           if (response.length) {
             // console.log('Files:\n-----------------------------------------');
@@ -173,9 +163,14 @@ class Config {
           console.log('timestamp ' + rawfilecontents)
 
           // get changes
+          console.log('looking for changes - in ' + rootFolderID)
           drive.changes.list(
               {
-                spaces: 'appDataFolder',
+                // spaces: 'appDataFolder',
+
+                // parents: rootFolderID,
+
+                q: 'parents = \'AppSecFolder\'',
                 pageToken: rawfilecontents.toString(),
                 fields: '*'
               },
@@ -250,14 +245,17 @@ class Config {
                   drive.files.list(
                       {
                         name: metadataname,
-                        parents: file.data.parents,
-                        spaces: 'appDataFolder',
+
+                        parents: rootFolderID,
+                        // parents: file.data.parents,
+                        // spaces: 'appDataFolder',
                         pageSize: 50,
                         fields: 'nextPageToken, files(name,id)'
                       },
                       (err, res) => {
                         if (err) {
-                          console.log('Error getting drive listing' + err);
+                          console.log('Error getting drive listing')
+                          console.error(err)
                           return;
                         }
                         const response = res.data.files;
@@ -361,15 +359,49 @@ class Config {
     if (fileId != '') {
       fileMetadata = {
         'name': fileName,
-        'appProperties': {'IV': Buffer.from(iv).toString('base64')}
+        'appProperties': {'IV': Buffer.from(iv).toString('base64')},
+        'parents': rootFolderID
       };
       console.log(fileId);
       drive.files.update(
-          {fileId: fileId, resource: fileMetadata, media: media, fields: 'id'})
+          {fileId: fileId, resource: fileMetadata, media: media, fields: 'id'},
+          function(err, file) {
+            if (err) {
+              // Handle error
+              console.error(err);
+            } else {
+              console.log(
+                  'Uploaded and updated file \"' + fileName + '\", File Id: ',
+                  file.id);
+              let permission = {
+                'type': 'user',
+                'role': 'writer',
+                'emailAddress': 'at.alisbeiti@gmail.com'
+              };
+              drive.permissions.create(
+                  {
+                    resource: permission,
+                    fileId: fileId,
+                    fields: 'id',
+                  },
+                  function(err, res) {
+                    if (err) {
+                      // Handle error...
+                      console.error(err);
+                      // permissionCallback(err);
+                    } else {
+                      console.log('Permission ID: ', res.id)
+                      // permissionCallback();
+                    }
+                  })
+            }
+          })
     } else {
       fileMetadata = {
         'name': fileName,
-        'parents': ['appDataFolder'],
+        // 'parents': ['appDataFolder'],
+
+        'parents': rootFolderID,
         'appProperties': {'IV': Buffer.from(iv).toString('base64')}
       };
       drive.files.create(
@@ -520,7 +552,8 @@ class Config {
     this.encryptFileForGroup(filename, ['alice', 'bob', this.displayName])
     // let self = this;  // so we can get `this` inside anonymous functions
     // this.getSecretKey(function(key) {
-    //   fs.readFile('./Documents/' + filename, function(err, rawfilecontents) {
+    //   fs.readFile('./Documents/' + filename, function(err, rawfilecontents)
+    //   {
     //     if (err) {
     //       console.log('error opening the file ./Documents/' + filename)
     //       console.dir(err)
@@ -563,7 +596,8 @@ class Config {
     let self = this;  // so we can get `this` inside anonymous functions
     fs.mkdir('./Documents', function() {
       // this initial one-time read isnt recursive (yet)
-      // fs.readdir('./Documents', {withFileTypes: false}, function(err, files)
+      // fs.readdir('./Documents', {withFileTypes: false}, function(err,
+      // files)
       // {
       //   // get the encryption key and encrypt files
       //   for (var file of files) {
@@ -633,9 +667,67 @@ class Config {
   }
 
   setListeners(eventVal) {
+    let self = this;
     event = eventVal;
-    this.handleCloud();
-    this.handleDocuments();
+    const drive = google.drive({version: 'v3', auth: this.auth});
+
+    drive.about.get({fields: 'user/displayName'})
+        .then(function(res) {
+          // console.log('ABOUT GET')
+          // console.dir(res.data)
+          console.log(res.data.user.displayName)
+          var name = res.data.user.displayName;
+          var firstname = name.split(' ')[0]
+          console.log(name);
+          self.displayName = firstname;
+        })
+        .catch(function(err) {
+          console.error(err)
+        })
+    folder = [];
+    console.log('about to look')
+    drive.files.list(
+        {
+          name: 'AppSecFolder',
+          mimeType: 'application/vnd.google-apps.folder',
+          q: 'name = \'AppSecFolder\' and mimeType=\'application/vnd.google-apps.folder\''
+        },
+        (err, res) => {
+          if (err) {
+            console.log('error getting initial drive listing')
+            console.error(err)
+            return;
+          }
+          let findfolderres = res.data.files;
+          console.log('looking for folder')
+          if (findfolderres.length) {
+            rootFolderID = findfolderres[0].id
+            console.log('found root folder ' + rootFolderID)
+            console.dir(findfolderres)
+          }
+          else {
+            console.log('no root folder found - making one')
+            drive.files.create(
+                {
+                  resource: {
+                    name: 'AppSecFolder',
+                    mimeType: 'application/vnd.google-apps.folder'
+                  },
+                  fields: 'id'
+                },
+                function(err, file) {
+                  if (err) {
+                    // Handle error
+                    console.error(err);
+                  } else {
+                    console.log('Folder Id: ', file.id);
+                    rootFolderID = file.id
+                  }
+                })
+          }
+          this.handleCloud();
+          this.handleDocuments();
+        })
   }
 
   // reloads the gui of the folder page.
