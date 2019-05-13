@@ -78,21 +78,24 @@ class Config {
   }
 
   listFiles(callback, eventVal) {
+    console.log('LISTFILES CALLED ' + rootFolderID)
+    // console.log(rootFolderID)
     // Test Output
     event = eventVal;
     const drive = google.drive({version: 'v3', auth: this.auth});
     var self = this;
     drive.files.list(
         {
-          // spaces: 'appDataFolder',
+          spaces: 'drive',
           // parents: rootFolderID,
-          q: 'parents = \'AppSecFolder\'',
+          q: rootFolderID + ' in parents',
           pageSize: 50,
           fields: 'nextPageToken, files(id, name)'
         },
         (err, res) => {
           if (err) {
             console.log('Error getting drive listing' + err);
+            console.error(err)
             return;
           }
           console.log('got the drive listing for the menu')
@@ -247,6 +250,7 @@ class Config {
                         name: metadataname,
 
                         parents: rootFolderID,
+                        q: rootFolderID + ' in parents',
                         // parents: file.data.parents,
                         // spaces: 'appDataFolder',
                         pageSize: 50,
@@ -360,7 +364,7 @@ class Config {
       fileMetadata = {
         'name': fileName,
         'appProperties': {'IV': Buffer.from(iv).toString('base64')},
-        'parents': rootFolderID
+        'parents': [rootFolderID]
       };
       console.log(fileId);
       drive.files.update(
@@ -401,7 +405,7 @@ class Config {
         'name': fileName,
         // 'parents': ['appDataFolder'],
 
-        'parents': rootFolderID,
+        'parents': [rootFolderID],
         'appProperties': {'IV': Buffer.from(iv).toString('base64')}
       };
       drive.files.create(
@@ -570,7 +574,7 @@ class Config {
     //     })
 
     // fs.mkdir("./.uploading", function () {
-    //     fs.writeFile("./.uploading/" + filename + ".encrypted",
+    //     fs.writeFile("./.uploading/" + filename + ".efncrypted",
     //     ciphertext, { encoding: 'binary' }, function (err) {
     //         if (err) {
     //             console.log("error writing to file ")
@@ -694,7 +698,7 @@ class Config {
         },
         (err, res) => {
           if (err) {
-            console.log('error getting initial drive listing')
+            console.log('error getting initial drive listing to find folder')
             console.error(err)
             return;
           }
