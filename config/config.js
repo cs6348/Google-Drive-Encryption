@@ -90,7 +90,7 @@ class Config {
         {
           spaces: 'drive',
           // parents: rootFolderID,
-          q: `'${rootFolderID}' in parents`, 
+          q: `'${rootFolderID}' in parents`,
           pageSize: 50,
           fields: 'nextPageToken, files(id, name)'
         },
@@ -175,7 +175,7 @@ class Config {
 
                 // parents: rootFolderID,
 
-                q: 'parents = \'AppSecFolder\'',
+                q: `'${rootFolderID}' in parents`,
                 pageToken: rawfilecontents.toString(),
                 fields: '*'
               },
@@ -348,7 +348,15 @@ class Config {
     });
   }
 
-  uploadfile(fileName, ciphertext, iv, callback) {
+  uploadfile(fileName, ciphertext, iv, callback, sharewith = []) {
+    var permissions = [];
+    for (let email of sharewith) {
+      permissions.push({
+        type: 'user',
+        role: 'writer',
+        emailAddress: email,
+      })
+    }
     justUploaded.push(fileName)
     const drive = google.drive({version: 'v3', auth: this.auth});
     var fileId = '';
@@ -366,7 +374,7 @@ class Config {
       fileMetadata = {
         'name': fileName,
         'appProperties': {'IV': Buffer.from(iv).toString('base64')},
-        parents: [rootFolderID]
+        // parents: [rootFolderID]
       };
       console.log(fileId);
       drive.files.update(
@@ -378,28 +386,21 @@ class Config {
             } else {
               console.log(
                   'Uploaded and updated file \"' + fileName + '\", File Id: ',
-                  file.id);
-              let permission = {
-                'type': 'user',
-                'role': 'writer',
-                'emailAddress': 'at.alisbeiti@gmail.com'
-              };
-              drive.permissions.create(
-                  {
-                    resource: permission,
-                    fileId: fileId,
-                    fields: 'id',
-                  },
-                  function(err, res) {
-                    if (err) {
-                      // Handle error...
-                      console.error(err);
-                      // permissionCallback(err);
-                    } else {
-                      console.log('Permission ID: ', res.id)
-                      // permissionCallback();
+                  file.data.id);
+              for (let perm of permissions) {
+                drive.permissions.create(
+                    {resource: perm, fileId: file.data.id, fields: 'id'}),
+                    function(err, res) {
+                      if (err) {
+                        // Handle error...
+                        console.error(err);
+                        // permissionCallback(err);
+                      } else {
+                        console.log('Permission ID: ', res.id)
+                        // permissionCallback();
+                      }
                     }
-                  })
+              }
             }
           })
     } else {
@@ -418,7 +419,22 @@ class Config {
               console.error(err);
             } else {
               console.log(
-                  'Uploaded file \"' + fileName + '\", File Id: ', file.id);
+                  'Uploaded file \"' + fileName + '\", File Id: ',
+                  file.data.id);
+              for (let perm of permissions) {
+                drive.permissions.create(
+                    {resource: perm, fileId: file.data.id, fields: 'id'}),
+                    function(err, res) {
+                      if (err) {
+                        // Handle error...
+                        console.error(err);
+                        // permissionCallback(err);
+                      } else {
+                        console.log('Permission ID: ', res.id)
+                        // permissionCallback();
+                      }
+                    }
+              }
             }
           });
     }
@@ -450,7 +466,22 @@ class Config {
 
 
   encryptFileForGroup(filename, group) {
-    console.log('encrypt for group called')
+    console.log('encrypt for group called ' + group)
+    var sharewith = [];
+    var encryptfor = group;
+
+
+    // first get a list of email addresses, build permissions.
+    if (group.length > 0) {
+      for (let firstname of group) {
+        console.log('getting email for ' + firstname)
+        let email = fs.readFileSync('./contacts/' + firstname + '.email')
+        sharewith.push(email);
+      }
+    }
+    encryptfor.push(this.displayName)
+
+
 
     let self = this;  // so we can get `this` inside anonymous functions
     this.getMyPrivateKey(function(key) {
@@ -471,7 +502,7 @@ class Config {
 
 
         let metadata = '';
-        for (let person of group) {
+        for (let person of encryptfor) {
           console.log('encrypting sym key for ' + person)
           let pubkey = fs.readFileSync('./contacts/' + person + '.publickey')
           let cipher = crypto.publicEncrypt(pubkey, symkey)
@@ -483,8 +514,8 @@ class Config {
           console.log('FILE UPLOADED')
           self.uploadfile(filename + '.metadata', metadata, iv, function() {
             console.log('metadata uploaded')
-          })
-        })
+          }, sharewith)
+        }, sharewith)
       })
     })
   }
@@ -555,7 +586,7 @@ class Config {
     // overwrite key file with new key file
   }
   encryptFile(filename) {
-    this.encryptFileForGroup(filename, ['alice', 'bob', this.displayName])
+    this.encryptFileForGroup(filename, [])
     // let self = this;  // so we can get `this` inside anonymous functions
     // this.getSecretKey(function(key) {
     //   fs.readFile('./Documents/' + filename, function(err, rawfilecontents)
@@ -731,12 +762,12 @@ class Config {
                     rootFolderID = file.id
                   }
                 })
-                callback();
+            callback();
           }
           this.handleCloud();
           this.handleDocuments();
         });
-        this.hasRootID = true;
+    this.hasRootID = true;
   }
 
   // reloads the gui of the folder page.
