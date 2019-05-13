@@ -165,7 +165,7 @@ class Config {
                 }
                 // const response = res.data.files;
                 // console.log('got a list of file changes:')
-                console.dir(res)
+                // console.dir(res)
                 let newversion = res.data.newStartPageToken
                 console.log('new cloud version ' + newversion)
                 fs.writeFile(
@@ -206,40 +206,99 @@ class Config {
         .get({
           fileId: fileid,
           fields:
-              'name, appProperties, createdTime, modifiedTime, modifiedByMeTime'
+              'name, parents, appProperties, createdTime, modifiedTime, modifiedByMeTime'
 
         })
         .then(function(file) {
-          justDownloaded.push(file.data.name)
-          console.log('Downloaded: ' + file.data.name);
-          // console.dir(file)
-          let iv = Buffer.from(file.data.appProperties.IV, 'base64')
-          let timestamp = file.data.modifiedTime
-          drive.files.get({fileId: fileid, alt: 'media'})
-              .then(function(filewithdata) {
-                console.log('ENCRYPTED FILE CONTENTS:')
-                console.dir(filewithdata.data)
-                self.getSecretKey(function(key) {
-                  let decipher = crypto.createDecipheriv('aes-256-gcm', key, iv)
-                  let cleartext =
-                      decipher.update(filewithdata.data, 'binary', 'binary')
-                  console.log('CLEARTEXT: ' + cleartext)
-                  fs.writeFile(
-                      './Documents/' + file.data.name, cleartext,
-                      {encoding: 'binary'}, function(err) {
+          if (!file.data.name.endsWith('.metadata')) {
+            justDownloaded.push(file.data.name)
+            console.log('Downloaded: ' + file.data.name);
+            // console.dir(file)
+            let iv = Buffer.from(file.data.appProperties.IV, 'base64')
+            console.log('GOT THE IV HERE')
+            console.log(iv)
+            let timestamp = file.data.modifiedTime
+            drive.files.get({fileId: fileid, alt: 'media'})
+                .then(function(filewithdata) {
+                  let metadataname = file.data.name + '.metadata'
+                  drive.files.list(
+                      {
+                        name: metadataname,
+                        parents: file.data.parents,
+                        spaces: 'appDataFolder',
+                        pageSize: 50,
+                        fields: 'nextPageToken, files(name,id)'
+                      },
+                      (err, res) => {
                         if (err) {
-                          console.log('error writing to file ')
-                          console.log('./Documents/' + file.data.name)
-                          throw err
-                        } else {
-                          console.log('WRITTEN TO FILE')
+                          console.log('Error getting drive listing' + err);
+                          return;
                         }
-                      })
+                        const response = res.data.files;
+                        let foundfile = [];
+                        if (response.length) {
+                          // foundfile = response[0].id
+                          for (let resp of response) {
+                            if (resp.name == metadataname) {
+                              foundfile = resp.id
+                            }
+                          }
+                        } else {
+                          console.log('No Files :(');
+                        }
+
+                        drive.files.get({fileId: foundfile, alt: 'media'})
+                            .then(function(metadatafile) {
+                              // console.log('METADATA FILE CONTENTS:')
+                              // console.log(metadatafile.data)
+                              let symkeyencrypted;
+                              let metadatalines = metadatafile.data.split('\n')
+                              for (let lineindex in metadatalines) {
+                                // console.log('looking at ')
+                                // console.dir(metadatalines[lineindex])
+                                if (metadatalines[lineindex] == 'nathan') {
+                                  console.log(
+                                      'found the sym key that was encrypted for us:')
+                                  // console.dir(metadatalines[lineindex])
+                                  console.dir(
+                                      metadatalines[parseInt(lineindex) + 1])
+                                  symkeyencrypted = new Buffer(
+                                      metadatalines[parseInt(lineindex) + 1],
+                                      'base64')
+                                }
+                              }
+                              self.getMyPrivateKey(function(priv) {
+                                console.log('ENCRYPTED FILE CONTENTS:')
+                                console.dir(filewithdata.data)
+                                var symkey = crypto.privateDecrypt(
+                                    priv, symkeyencrypted);
+                                // console.log(symkey)
+                                // console.log(iv)
+                                let decipher = crypto.createDecipheriv(
+                                    'aes-256-gcm', symkey, iv)
+                                let cleartext = decipher.update(
+                                    filewithdata.data, 'binary', 'binary')
+                                console.log('CLEARTEXT: ' + cleartext)
+                                fs.writeFile(
+                                    './Documents/' + file.data.name, cleartext,
+                                    {encoding: 'binary'}, function(err) {
+                                      if (err) {
+                                        console.log('error writing to file ')
+                                        console.log(
+                                            './Documents/' + file.data.name)
+                                        throw err
+                                      } else {
+                                        console.log('WRITTEN TO FILE')
+                                      }
+                                    })
+                              })
+                            })
+                      });
                 })
-              })
-              .catch(function(err) {
-                console.log('Error during second download', err);
-              })
+                .catch(function(err) {
+                  console.log('Error during second download', err);
+                })
+          }
         })
         .catch(function(err) {
           console.log('Error during download', err);
@@ -289,7 +348,7 @@ class Config {
               console.error(err);
             } else {
               console.log(
-                  'Uploaded file \"' + fileName + '\", File Id: ', file.id);
+                  'Uploaded file \"' + fileName + '\", File Id: ', file.fileId);
             }
           });
     }
@@ -338,9 +397,6 @@ class Config {
         let ciphertext = cipher.update(rawfilecontents, 'binary', 'binary')
 
 
-        // self.uploadfile(filename, ciphertext, iv, function() {
-        //   console.log('FINISHED AN UPLOAD')
-        // })
 
         let metadata = '';
         for (let person of group) {
@@ -351,8 +407,11 @@ class Config {
           metadata += cipher.toString('base64') + '\n'
         }
         console.log(metadata)
-        self.uploadfile(filename + '.metadata', metadata, iv, function() {
-          console.log('metadata uploaded')
+        self.uploadfile(filename, ciphertext, iv, function() {
+          console.log('FILE UPLOADED')
+          self.uploadfile(filename + '.metadata', metadata, iv, function() {
+            console.log('metadata uploaded')
+          })
         })
       })
     })
@@ -395,7 +454,9 @@ class Config {
           '.privatekey',
           function(err, rawfilecontents) {  // if file exists read key
             if (err) throw err
-              return callback(rawfilecontents)
+              let actualkey = crypto.createPrivateKey(
+                  {key: rawfilecontents, passphrase: 'top secret'})
+              return callback(actualkey)
           })
     })
   }
@@ -417,72 +478,73 @@ class Config {
   }
   encryptFile(filename) {
     this.encryptFileForGroup(filename, ['alice', 'bob', 'nathan'])
-    let self = this;  // so we can get `this` inside anonymous functions
-    this.getSecretKey(function(key) {
-      fs.readFile('./Documents/' + filename, function(err, rawfilecontents) {
-        if (err) {
-          console.log('error opening the file ./Documents/' + filename)
-          console.dir(err)
-          throw err
-        }
+    // let self = this;  // so we can get `this` inside anonymous functions
+    // this.getSecretKey(function(key) {
+    //   fs.readFile('./Documents/' + filename, function(err, rawfilecontents) {
+    //     if (err) {
+    //       console.log('error opening the file ./Documents/' + filename)
+    //       console.dir(err)
+    //       throw err
+    //     }
 
-        let iv = crypto.randomBytes(16)
-        let cipher = crypto.createCipheriv('aes-256-gcm', key, iv)
-        let ciphertext = cipher.update(rawfilecontents, 'binary', 'binary')
+    //     let iv = crypto.randomBytes(16)
+    //     let cipher = crypto.createCipheriv('aes-256-gcm', key, iv)
+    //     let ciphertext = cipher.update(rawfilecontents, 'binary', 'binary')
 
 
-        self.uploadfile(filename, ciphertext, iv, function() {
-          console.log('FINISHED AN UPLOAD')
-        })
+    //     self.uploadfile(filename, ciphertext, iv, function() {
+    //       console.log('FINISHED AN UPLOAD')
+    //     })
 
-        // fs.mkdir("./.uploading", function () {
-        //     fs.writeFile("./.uploading/" + filename + ".encrypted",
-        //     ciphertext, { encoding: 'binary' }, function (err) {
-        //         if (err) {
-        //             console.log("error writing to file ")
-        //             console.log("./.uploading/" + filename + ".encrypted")
-        //             throw err
-        //         }
-        //     })
-        //     console.log("IV for file " + filename + " is :")
-        //     console.dir(iv)
-        //     //TODO store IV somehow
-        //     //we can store it on google drive with  "custom file properties",
-        //     basically metadata
-        //     https://developers.google.com/drive/api/v3/properties
-        //     //but not sure how to get it to there?
+    // fs.mkdir("./.uploading", function () {
+    //     fs.writeFile("./.uploading/" + filename + ".encrypted",
+    //     ciphertext, { encoding: 'binary' }, function (err) {
+    //         if (err) {
+    //             console.log("error writing to file ")
+    //             console.log("./.uploading/" + filename + ".encrypted")
+    //             throw err
+    //         }
+    //     })
+    //     console.log("IV for file " + filename + " is :")
+    //     console.dir(iv)
+    //     //TODO store IV somehow
+    //     //we can store it on google drive with  "custom file
+    //     properties", basically metadata
+    //     https://developers.google.com/drive/api/v3/properties
+    //     //but not sure how to get it to there?
 
-        // })
-      })
-    })
+    // })
+    //   })
+    // })
   }
 
   handleDocuments() {
     let self = this;  // so we can get `this` inside anonymous functions
     fs.mkdir('./Documents', function() {
       // this initial one-time read isnt recursive (yet)
-      fs.readdir('./Documents', {withFileTypes: false}, function(err, files) {
-        // get the encryption key and encrypt files
-        for (var file of files) {
-          // console.log(file)
-          // open the file:
-          self.encryptFile(file)
-        }
-        self.reload();
-      })
+      // fs.readdir('./Documents', {withFileTypes: false}, function(err, files)
+      // {
+      //   // get the encryption key and encrypt files
+      //   for (var file of files) {
+      //     // console.log(file)
+      //     // open the file:
+      //     self.encryptFile(file)
+      //   }
+      //   self.reload();
+      // })
       // setup watch on filedirectory
       console.log('Setup File watch!')
       var diskchanges = [];
-      // var justDownloaded = [];  // re-empty this list just in case. only need
-      // to track these while the watch-er is running.
+      // var justDownloaded = [];  // re-empty this list just in case. only
+      // need to track these while the watch-er is running.
       fs.watch('./Documents', {recursive: true}, function(eventname, filename) {
         console.log(
             'CHANGE DETECTED OF TYPE ' + eventname + ' ON FILE ' + filename)
         // change means file contents changed
         // rename means creation/deletion/rename
         if (eventname == 'change') {
-          // These events always seem to be triggered twice. so we log them the
-          // first time so that we can ignore them the second
+          // These events always seem to be triggered twice. so we log them
+          // the first time so that we can ignore them the second
           let wasjustchanged = false;
           let changedindex = -1;
           for (let i in diskchanges) {
