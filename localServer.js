@@ -51,13 +51,6 @@ function launchServer() {
 
 var ipc = require('electron').ipcMain;
 
-ipc.on('invokeAction', function (event, data) {
-    function sendData(data) {
-        event.sender.send('actionReply', data);
-    }
-    config.listFiles(sendData, event);
-});
-
 ipc.on('driveAction', (event, data) => {
     if(data[0].toUpperCase == 'DELETE'.toUpperCase)
         config.deleteFile(data[1], () => { config.windows.win.reload() });
@@ -67,9 +60,24 @@ ipc.on('driveAction', (event, data) => {
         console.log('Unidentified Action');
 });
 
+ipc.on('initial', (event) => {
+    function sendData(data) {
+        event.sender.send('actionReply', data);
+    }
+
+    if(config.hasRootID)
+        config.listFiles(sendData, event);
+});
+
 ipc.once('driveListeners', (event) => {
-    config.setListeners(event);
-})
+    function sendData(data) {
+        event.sender.send('actionReply', data);
+    }
+
+    config.setListeners(event, () => { config.listFiles(sendData, event); });
+});
+
+
 
 module.exports.launchServer = launchServer;
 

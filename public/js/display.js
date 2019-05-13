@@ -63,9 +63,10 @@ function getInfo(info) {
   alert(`Download ID: ${info}`);
 }
 
-ipc.once('actionReply', function(event, response) {
+ipc.on('actionReply', function(event, response) {
+  console.log('ACTION ++++++ REPLAY +++++')
   printFiles(response);
 });
 
 ipc.send('driveListeners');
-ipc.send('invokeAction', 'someData');
+ipc.send('initial');

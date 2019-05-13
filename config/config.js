@@ -1,4 +1,4 @@
-var ipc = require('electron').ipcRenderer;
+const {ipcRenderer} = require('electron');
 const {google} = require('googleapis');
 const fs = require('fs');
 const crypto = require('crypto');
@@ -24,6 +24,7 @@ class Config {
     this.clientCode = null;
     this.clientToken = null;
     this.displayName = null;
+    this.hasRootID = false;
 
     // local web paths
     this.paths =
@@ -79,6 +80,7 @@ class Config {
 
   listFiles(callback, eventVal) {
     console.log('LISTFILES CALLED ' + rootFolderID)
+    folder = [];
     // console.log(rootFolderID)
     // Test Output
     event = eventVal;
@@ -88,7 +90,7 @@ class Config {
         {
           spaces: 'drive',
           // parents: rootFolderID,
-          q: rootFolderID + ' in parents',
+          q: `'${rootFolderID}' in parents`, 
           pageSize: 50,
           fields: 'nextPageToken, files(id, name)'
         },
@@ -670,7 +672,7 @@ class Config {
     })
   }
 
-  setListeners(eventVal) {
+  setListeners(eventVal, callback) {
     let self = this;
     event = eventVal;
     const drive = google.drive({version: 'v3', auth: this.auth});
@@ -708,6 +710,7 @@ class Config {
             rootFolderID = findfolderres[0].id
             console.log('found root folder ' + rootFolderID)
             console.dir(findfolderres)
+            callback();
           }
           else {
             console.log('no root folder found - making one')
@@ -728,10 +731,12 @@ class Config {
                     rootFolderID = file.id
                   }
                 })
+                callback();
           }
           this.handleCloud();
           this.handleDocuments();
-        })
+        });
+        this.hasRootID = true;
   }
 
   // reloads the gui of the folder page.
