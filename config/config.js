@@ -785,7 +785,6 @@ class Config {
           this.handleCloud();
           this.handleDocuments();
         });
-    this.hasRootID = true;
   }
 
   // reloads the gui of the folder page.

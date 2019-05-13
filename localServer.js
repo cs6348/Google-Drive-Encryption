@@ -64,9 +64,9 @@ ipc.on('initial', (event) => {
     function sendData(data) {
         event.sender.send('actionReply', data);
     }
-
-    if(config.hasRootID)
+    if(config.hasRootID){
         config.listFiles(sendData, event);
+    }
 });
 
 ipc.once('driveListeners', (event) => {
@@ -74,7 +74,7 @@ ipc.once('driveListeners', (event) => {
         event.sender.send('actionReply', data);
     }
 
-    config.setListeners(event, () => { config.listFiles(sendData, event); });
+    config.setListeners(event, () => {config.hasRootID = true; config.listFiles(sendData, event); });
 });
 
 
