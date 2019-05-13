@@ -36,6 +36,7 @@ class Config {
     this.winConfig = {
       width: 750,
       height: 800,
+
       show: false,
       webPreferences: {nodeIntegration: true}
     }
@@ -43,6 +44,7 @@ class Config {
                      this.windows = {
       win: null
     }
+
   }
 
   // Get/Set client code sent by Google
@@ -101,8 +103,9 @@ class Config {
           } else {
             console.log('No Files :(');
           }
-          this.handleCloud();
-          this.handleDocuments();
+
+          // this.handleCloud();
+          // this.handleDocuments();
         });
   }
 
@@ -305,11 +308,18 @@ class Config {
         })
   }
 
-  deleteFile(fileID) {
+
+  deleteFile(fileID, callback){
     const drive = google.drive({version: 'v3', auth: this.auth});
-    drive.files.delete({fileId: fileID}, (err) => {
-      if (err) console.log('Error DELETING drive listing: ' + err);
+    drive.files.delete({fileId: fileID},
+    (err) => {
+      if (err){
+        console.log('Error DELETING drive listing: ' + err);
+        return;
+      }
+      callback();
     });
+    
   }
 
   uploadfile(fileName, ciphertext, iv, callback) {
@@ -349,6 +359,7 @@ class Config {
             } else {
               console.log(
                   'Uploaded file \"' + fileName + '\", File Id: ', file.fileId);
+
             }
           });
     }
@@ -378,9 +389,14 @@ class Config {
     })
   }
 
+  shareFile(filename, user) {
+    // download filename's key file of username user
+
+    // download key sharing file
 
   encryptFileForGroup(filename, group) {
     console.log('encrypt for group called')
+
     let self = this;  // so we can get `this` inside anonymous functions
     this.getMyPrivateKey(function(key) {
       console.log('got private key')
@@ -394,6 +410,7 @@ class Config {
         let iv = crypto.randomBytes(16)
         let symkey = crypto.randomBytes(32)
         let cipher = crypto.createCipheriv('aes-256-gcm', symkey, iv)
+
         let ciphertext = cipher.update(rawfilecontents, 'binary', 'binary')
 
 
@@ -518,6 +535,7 @@ class Config {
     // })
   }
 
+
   handleDocuments() {
     let self = this;  // so we can get `this` inside anonymous functions
     fs.mkdir('./Documents', function() {
@@ -537,6 +555,7 @@ class Config {
       var diskchanges = [];
       // var justDownloaded = [];  // re-empty this list just in case. only
       // need to track these while the watch-er is running.
+
       fs.watch('./Documents', {recursive: true}, function(eventname, filename) {
         console.log(
             'CHANGE DETECTED OF TYPE ' + eventname + ' ON FILE ' + filename)
@@ -545,6 +564,7 @@ class Config {
         if (eventname == 'change') {
           // These events always seem to be triggered twice. so we log them
           // the first time so that we can ignore them the second
+
           let wasjustchanged = false;
           let changedindex = -1;
           for (let i in diskchanges) {
@@ -588,6 +608,13 @@ class Config {
       })
     })
   }
+
+  setListeners(eventVal){
+    event = eventVal;
+    this.handleCloud();
+    this.handleDocuments();
+  }
+
   // reloads the gui of the folder page.
   reload() {
     event.sender.send('actionReply', folder);

@@ -9,6 +9,7 @@ let win = null;
 
 function launchApp(){
     win = new BrowserWindow(config.winConfig);
+    config.windows.win = win;
 
     //Start local server; needed for login redirect
     //TUDO: Am I using Async correct here?

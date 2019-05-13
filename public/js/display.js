@@ -30,11 +30,14 @@ function printFiles(folder)
         file[i].id = i;
         file[i].innerHTML = `
         <th scope="row"> ${i} </th>
-        <td> <img src=${folder[i][3]}> </td>
+        <td class="col-actions"> ${(folder[1][3]) ? '<img src="' + folder[1][3] + '">' : '<i class="fas fa-lock"></i>'} </td>
         <td> ${folder[i][0]} </td>
         <td class="align-bottom col-actions">
             <button onClick="getInfo('${folder[i][1]}')">
                 <i class="fas fa-info-circle"></i>
+            </button>
+            <button onClick="remoteAction('DOWNLOAD', '${folder[i][1]}')"> 
+                <i class="fas fa-file-download"></i>
             </button>
             <button class="danger-button" onClick="remoteAction('DELETE', '${folder[i][1]}')"> 
                 <i class="fas fa-trash"></i>
@@ -60,5 +63,6 @@ ipc.once('actionReply', function(event, response){
         printFiles(response);
 });
 
+ipc.send('driveListeners');
 ipc.send('invokeAction', 'someData');
 
