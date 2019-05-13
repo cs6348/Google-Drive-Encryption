@@ -2,6 +2,7 @@ const config = require('./config/config');
 const path = require('path');
 const express = require('express');
 const app = express();
+const { dialog } = require('electron');
 
 const generateOAuth = (req, res, next) => {
     config.generateAuth();
@@ -59,7 +60,20 @@ ipc.on('driveAction', (event, data) => {
         config.downloadfile(data[1], () => { config.windows.win.reload() });
     }
     else if(data[0].localeCompare('share') == 0){
-        console.log('Share selected');
+        config.getEmailList().forEach( (i) => {
+            console.log('User: ' + i);
+        });
+
+        const emails = config.getEmailList() 
+
+        var options = {
+            buttons: emails,
+        }
+
+        dialog.showMessageBox(config.windows.win, options, (res) => {
+            console.log("SHARING: " + data[1] + " with " + emails[res]);
+            config.encryptFileForGroup(data[1], [emails[res]]);
+        });
     }
     else{
         console.log('Unidentified Action');

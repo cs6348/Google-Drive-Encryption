@@ -38,7 +38,7 @@ function printFiles(folder) {
                 <i class="fas fa-info-circle">
                 </i>
             </button>
-            <button onClick="remoteAction('share', '${folder[i][1]}')">
+            <button onClick="remoteAction('share', '${folder[i][0]}')">
               <i class="fas fa-share"></i>
             </button>
             <button onClick="remoteAction('download', '${folder[i][1]}')"> 
