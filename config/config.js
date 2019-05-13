@@ -364,7 +364,7 @@ class Config {
       fileMetadata = {
         'name': fileName,
         'appProperties': {'IV': Buffer.from(iv).toString('base64')},
-        'parents': [rootFolderID]
+        parents: [rootFolderID]
       };
       console.log(fileId);
       drive.files.update(
