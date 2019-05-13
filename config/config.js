@@ -22,6 +22,7 @@ class Config {
     this.clientSecret = 'I31wkLGps8aQDQnleIvp_Qv2';
     this.clientCode = null;
     this.clientToken = null;
+    this.displayName = null;
 
     // local web paths
     this.paths =
@@ -44,7 +45,6 @@ class Config {
                      this.windows = {
       win: null
     }
-
   }
 
   // Get/Set client code sent by Google
@@ -80,6 +80,20 @@ class Config {
     // Test Output
     event = eventVal;
     const drive = google.drive({version: 'v3', auth: this.auth});
+    var self = this;
+    drive.about.get({fields: 'user/displayName'})
+        .then(function(res) {
+          // console.log('ABOUT GET')
+          // console.dir(res.data)
+          console.log(res.data.user.displayName)
+          var name = res.data.user.displayName;
+          var firstname = name.split(' ')[0]
+          console.log(name)
+          self.displayName = firstname;
+        })
+        .catch(function(err) {
+          console.error(err)
+        })
     folder = [];
     drive.files.list(
         {
@@ -160,7 +174,11 @@ class Config {
 
           // get changes
           drive.changes.list(
-              {spaces: 'appDataFolder', pageToken: rawfilecontents.toString()},
+              {
+                spaces: 'appDataFolder',
+                pageToken: rawfilecontents.toString(),
+                fields: '*'
+              },
               (err, res) => {
                 if (err) {
                   console.log('Error getting changed files ' + err);
@@ -169,11 +187,16 @@ class Config {
                 // const response = res.data.files;
                 // console.log('got a list of file changes:')
                 // console.dir(res)
-                let newversion = res.data.newStartPageToken
+                let newversion = res.data.nextPageToken
                 console.log('new cloud version ' + newversion)
+                if (newversion == undefined) {
+                  newversion = res.data.newStartPageToken
+                }
+                if (newversion == undefined) {
+                  console.dir(res)
+                }
                 fs.writeFile(
-                    '.timestamp', new Buffer(res.data.newStartPageToken),
-                    function(err) {
+                    '.timestamp', new Buffer(newversion), function(err) {
                       if (err) throw err
                         console.log(
                             res.data.changes.length.toString() +
@@ -259,7 +282,8 @@ class Config {
                               for (let lineindex in metadatalines) {
                                 // console.log('looking at ')
                                 // console.dir(metadatalines[lineindex])
-                                if (metadatalines[lineindex] == 'nathan') {
+                                if (metadatalines[lineindex] ==
+                                    self.displayName) {
                                   console.log(
                                       'found the sym key that was encrypted for us:')
                                   // console.dir(metadatalines[lineindex])
@@ -309,17 +333,15 @@ class Config {
   }
 
 
-  deleteFile(fileID, callback){
+  deleteFile(fileID, callback) {
     const drive = google.drive({version: 'v3', auth: this.auth});
-    drive.files.delete({fileId: fileID},
-    (err) => {
-      if (err){
+    drive.files.delete({fileId: fileID}, (err) => {
+      if (err) {
         console.log('Error DELETING drive listing: ' + err);
         return;
       }
       callback();
     });
-    
   }
 
   uploadfile(fileName, ciphertext, iv, callback) {
@@ -358,8 +380,7 @@ class Config {
               console.error(err);
             } else {
               console.log(
-                  'Uploaded file \"' + fileName + '\", File Id: ', file.fileId);
-
+                  'Uploaded file \"' + fileName + '\", File Id: ', file.id);
             }
           });
     }
@@ -389,10 +410,6 @@ class Config {
     })
   }
 
-  shareFile(filename, user) {
-    // download filename's key file of username user
-
-    // download key sharing file
 
   encryptFileForGroup(filename, group) {
     console.log('encrypt for group called')
@@ -436,6 +453,7 @@ class Config {
 
 
   getMyPrivateKey(callback) {
+    var self = this;
     fs.stat('.privatekey', function(err, stats) {
       if (err) {
         if (err.code == 'ENOENT') {  // if key doesnt exist, make it
@@ -454,14 +472,19 @@ class Config {
                 // Handle errors and use the generated key pair.
                 // let key = crypto.randomBytes(32);
                 console.log('GENERATED KEY PAIR')
-                console.log(publicKey)
+                console.log(publicKey);
                 fs.writeFile('.privatekey', privateKey, function(err) {
                   if (err) throw err;
+                  fs.writeFile(
+                      './contacts/' + self.displayName + '.publickey',
+                      publicKey, function(err) {
+                        if (err) throw err;
+                        console.log(
+                            'written to ' +
+                            './contacts/' + self.displayName + '.publickey')
+                      })
+                  return callback(publickey);
                 })
-                fs.writeFile('.publickey', publicKey, function(err) {
-                  if (err) throw err;
-                })
-                return callback(publickey);
               });
 
         } else
@@ -494,7 +517,7 @@ class Config {
     // overwrite key file with new key file
   }
   encryptFile(filename) {
-    this.encryptFileForGroup(filename, ['alice', 'bob', 'nathan'])
+    this.encryptFileForGroup(filename, ['alice', 'bob', this.displayName])
     // let self = this;  // so we can get `this` inside anonymous functions
     // this.getSecretKey(function(key) {
     //   fs.readFile('./Documents/' + filename, function(err, rawfilecontents) {
@@ -609,7 +632,7 @@ class Config {
     })
   }
 
-  setListeners(eventVal){
+  setListeners(eventVal) {
     event = eventVal;
     this.handleCloud();
     this.handleDocuments();
