@@ -175,7 +175,8 @@ class Config {
 
                 // parents: rootFolderID,
 
-                q: `'${rootFolderID}' in parents`,
+                q: `'${
+                    rootFolderID}' in parents and mimeType != 'application/vnd.google-apps.folder'                `,
                 pageToken: rawfilecontents.toString(),
                 fields: '*'
               },
