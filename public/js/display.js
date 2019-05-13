@@ -35,13 +35,16 @@ function printFiles(folder) {
         <td> ${folder[i][0]} </td>
         <td class="align-bottom col-actions">
             <button onClick="getInfo('${folder[i][1]}')">
-                <i class="fas fa-info-circle"></i>
+                <i class="fas fa-info-circle">
+                </i>
             </button>
-            <button onClick="remoteAction('DOWNLOAD', '${folder[i][1]}')"> 
+            <button onClick="remoteAction('share', '${folder[i][1]}')">
+              <i class="fas fa-share"></i>
+            </button>
+            <button onClick="remoteAction('download', '${folder[i][1]}')"> 
                 <i class="fas fa-file-download"></i>
             </button>
-            <button class="danger-button" onClick="remoteAction('DELETE', '${
-        folder[i][1]}')"> 
+            <button class="danger-button" onClick="remoteAction('delete', '${folder[i][1]}')"> 
                 <i class="fas fa-trash"></i>
             </button>
         </td>
@@ -64,7 +67,6 @@ function getInfo(info) {
 }
 
 ipc.on('actionReply', function(event, response) {
-  console.log('ACTION ++++++ REPLAY +++++')
   printFiles(response);
 });
 

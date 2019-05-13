@@ -296,14 +296,14 @@ class Config {
                                   symkeyencrypted = new Buffer(
                                       metadatalines[parseInt(lineindex) + 1],
                                       'base64')
-                                }
+                                } 
                               }
                               self.getMyPrivateKey(function(priv) {
                                 console.log('ENCRYPTED FILE CONTENTS:')
                                 console.dir(filewithdata.data)
                                 var symkey = crypto.privateDecrypt(
                                     priv, symkeyencrypted);
-                                // console.log(symkey)
+                                 console.log('SYMKEY ------->' + symkey)
                                 // console.log(iv)
                                 let decipher = crypto.createDecipheriv(
                                     'aes-256-gcm', symkey, iv)
@@ -604,7 +604,7 @@ class Config {
   }
   encryptFile(filename) {
     console.log(this.getEmailList());
-    this.encryptFileForGroup(filename, []);
+    this.encryptFileForGroup(filename, ['Nathan']);
     // let self = this;  // so we can get `this` inside anonymous functions
     // this.getSecretKey(function(key) {
     //   fs.readFile('./Documents/' + filename, function(err, rawfilecontents)

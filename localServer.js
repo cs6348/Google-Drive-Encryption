@@ -52,12 +52,18 @@ function launchServer() {
 var ipc = require('electron').ipcMain;
 
 ipc.on('driveAction', (event, data) => {
-    if(data[0].toUpperCase == 'DELETE'.toUpperCase)
+    if(data[0].localeCompare('delete') == 0){
         config.deleteFile(data[1], () => { config.windows.win.reload() });
-    if(data[0].toUpperCase == 'DOWNLOAD'.toUpperCase)
+    }
+    else if(data[0].localeCompare('download') == 0){
         config.downloadfile(data[1], () => { config.windows.win.reload() });
-    else
+    }
+    else if(data[0].localeCompare('share') == 0){
+        console.log('Share selected');
+    }
+    else{
         console.log('Unidentified Action');
+    }
 });
 
 ipc.on('initial', (event) => {
