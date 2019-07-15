@@ -4,3 +4,6 @@ Documents/*
 .downloading/*
 .secretkey
 .timestamp
+.publickey
+.privatekey
+contacts/*.email

@@ -2,6 +2,7 @@ const config = require('./config/config');
 const path = require('path');
 const express = require('express');
 const app = express();
+const { dialog } = require('electron');
 
 const generateOAuth = (req, res, next) => {
     config.generateAuth();
@@ -51,25 +52,52 @@ function launchServer() {
 
 var ipc = require('electron').ipcMain;
 
-ipc.on('invokeAction', function (event, data) {
+ipc.on('driveAction', (event, data) => {
+    if(data[0].localeCompare('delete') == 0){
+        config.deleteFile(data[1], () => { config.windows.win.reload() });
+    }
+    else if(data[0].localeCompare('download') == 0){
+        config.downloadfile(data[1], () => { config.windows.win.reload() });
+    }
+    else if(data[0].localeCompare('share') == 0){
+        config.getEmailList().forEach( (i) => {
+            console.log('User: ' + i);
+        });
+
+        const emails = config.getEmailList() 
+
+        var options = {
+            buttons: emails,
+        }
+
+        dialog.showMessageBox(config.windows.win, options, (res) => {
+            console.log("SHARING: " + data[1] + " with " + emails[res]);
+            config.encryptFileForGroup(data[1], [emails[res]]);
+        });
+    }
+    else{
+        console.log('Unidentified Action');
+    }
+});
+
+ipc.on('initial', (event) => {
     function sendData(data) {
         event.sender.send('actionReply', data);
     }
-    config.listFiles(sendData, event);
-});
-
-ipc.on('driveAction', (event, data) => {
-    if(data[0].toUpperCase == 'DELETE'.toUpperCase)
-        config.deleteFile(data[1], () => { config.windows.win.reload() });
-    if(data[0].toUpperCase == 'DOWNLOAD'.toUpperCase)
-        config.downloadfile(data[1], () => { config.windows.win.reload() });
-    else
-        console.log('Unidentified Action');
+    if(config.hasRootID){
+        config.listFiles(sendData, event);
+    }
 });
 
 ipc.once('driveListeners', (event) => {
-    config.setListeners(event);
-})
+    function sendData(data) {
+        event.sender.send('actionReply', data);
+    }
+
+    config.setListeners(event, () => {config.hasRootID = true; config.listFiles(sendData, event); });
+});
+
+
 
 module.exports.launchServer = launchServer;
 
